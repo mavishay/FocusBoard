@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { EmailPreviewModal } from '../../src/components/EmailPreviewModal';
 
 const mockGmail = {
@@ -18,6 +18,7 @@ function setupDefaults() {
     id: 'e1',
     accountId: 'a1',
     externalId: 'ext1',
+    accountIndex: 0,
     subject: 'Test Email Subject',
     fromAddress: 'sender@example.com',
     receivedAt: '2026-01-01T00:00:00Z',
@@ -40,6 +41,10 @@ beforeEach(() => {
       shell: mockShell,
     },
   };
+});
+
+afterEach(() => {
+  cleanup();
 });
 
 describe('EmailPreviewModal', () => {
