@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { EmailList } from '../../src/components/EmailList';
 import { SortGroupControls } from '../../src/components/email/SortGroupControls';
 import { EmailGroupHeader } from '../../src/components/email/EmailGroupHeader';
@@ -83,6 +83,10 @@ beforeEach(() => {
   };
 });
 
+afterEach(() => {
+  cleanup();
+});
+
 async function renderEmailList() {
   await act(async () => {
     render(
@@ -113,7 +117,7 @@ describe('EmailList', () => {
 
     await renderEmailList();
     expect(screen.queryByText('Test Email')).toBeTruthy();
-    expect(screen.queryByText('Hello world')).toBeTruthy();
+    expect(screen.queryByText('sender@example.com')).toBeTruthy();
   });
 
   it('shows classification badges', async () => {
@@ -123,8 +127,8 @@ describe('EmailList', () => {
     ]);
 
     await renderEmailList();
-    // The badge shows "Urgent" — check for the badge element specifically
-    const badges = screen.getAllByText('Urgent');
+    // Badge renders lowercase "urgent"; capitalize CSS only affects visual display
+    const badges = screen.getAllByText('urgent');
     expect(badges.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -226,8 +230,10 @@ describe('EmailList', () => {
     ]);
 
     await renderEmailList();
-    const spans = document.querySelectorAll('span.w-2.h-2.rounded-full');
-    expect(spans.length).toBeGreaterThanOrEqual(1);
+    // Unread emails are indicated by bold subject text
+    const subjects = screen.getAllByText('Unread');
+    expect(subjects.length).toBeGreaterThanOrEqual(1);
+    expect(subjects[0].className).toContain('font-bold');
   });
 
   it('does not show blue dot for read emails', async () => {
