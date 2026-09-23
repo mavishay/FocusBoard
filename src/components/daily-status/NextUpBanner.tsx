@@ -1,11 +1,11 @@
-import { PLACEHOLDER_NEXT_UP } from "./placeholder-data";
+import { useNextUpData, type NextUpBannerProps } from "./use-next-up-data";
 
-export function NextUpBanner() {
-  const [prefix, ...rest] = PLACEHOLDER_NEXT_UP.split(": ");
+export function NextUpBanner(props: NextUpBannerProps = {}) {
+  const summary = useNextUpData(props);
 
   return (
     <div className="ds-next" data-testid="next-up-banner">
-      <strong>{prefix}:</strong> {rest.join(": ")}
+      <strong>Next up:</strong> {summary}
     </div>
   );
 }
