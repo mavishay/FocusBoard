@@ -194,6 +194,10 @@ export async function generateTaskPlannerSuggestions(
   tasks: PlannerTaskInput[],
   workload: PlannerWorkloadContext | null,
 ): Promise<PlannerSuggestion[]> {
+  if (tasks.length === 0) {
+    return [];
+  }
+
   if (!hasAiConsent(db)) {
     throw new Error('AI consent required. Enable AI features in Settings.');
   }
@@ -201,10 +205,6 @@ export async function generateTaskPlannerSuggestions(
   const keyInfo = getActiveApiKey(db);
   if (!keyInfo) {
     throw new Error('No API key configured. Add an OpenAI or Anthropic key in Settings.');
-  }
-
-  if (tasks.length === 0) {
-    return [];
   }
 
   const prompt = buildPrompt(tasks, workload);

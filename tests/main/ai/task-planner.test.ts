@@ -35,7 +35,17 @@ describe('generateTaskPlannerSuggestions', () => {
   });
 
   it('throws when no API key is configured', async () => {
-    db.exec('UPDATE ai_consent_settings SET consented = 1 WHERE id = 1');
+    db.exec(`
+      CREATE TABLE api_keys (
+        id TEXT PRIMARY KEY,
+        provider TEXT NOT NULL,
+        label TEXT NOT NULL,
+        encrypted_key BLOB NOT NULL,
+        base_url TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      UPDATE ai_consent_settings SET consented = 1 WHERE id = 1;
+    `);
     await expect(
       generateTaskPlannerSuggestions(
         db,
