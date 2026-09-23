@@ -12,7 +12,6 @@ import { recordTelemetryEvent } from './telemetry';
 import { recordSetupEvent, hasSetupStarted } from './onboarding/setup-tracker';
 import { ServiceRegistry } from './services/service-registry';
 import { CronService } from './services/cron-service';
-import { GoogleTasksSyncService } from './services/google-tasks-service';
 import { TickTickSyncService } from './services/ticktick-service';
 import { registerServiceHandlers } from './ipc/service-handlers';
 import { existsSync } from 'fs';
@@ -87,9 +86,6 @@ app.whenReady().then(async () => {
 
   const cronService = new CronService(cronScheduler);
   serviceRegistry.register(cronService);
-
-  const googleTasksService = new GoogleTasksSyncService(db);
-  serviceRegistry.register(googleTasksService);
 
   const ticktickService = new TickTickSyncService(db);
   serviceRegistry.register(ticktickService);

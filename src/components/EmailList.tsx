@@ -314,17 +314,8 @@ export function EmailList({ onCountChange }: { onCountChange?: (count: number | 
     setConvertingIds((prev) => new Set(prev).add(email.id));
     setError(null);
     try {
-      const [gtAccounts, ttAccounts] = await Promise.all([
-        window.electronAPI.googleTasks.listAccounts(),
-        window.electronAPI.ticktick.listAccounts(),
-      ]);
+      const ttAccounts = await window.electronAPI.ticktick.listAccounts();
       const lists: TaskListItem[] = [];
-      for (const acc of gtAccounts) {
-        const gtLists = await window.electronAPI.googleTasks.listLists(acc.id);
-        for (const l of gtLists) {
-          lists.push({ id: l.id, title: l.title, source: 'google-tasks', accountId: acc.id });
-        }
-      }
       for (const acc of ttAccounts) {
         const ttProjects = await window.electronAPI.ticktick.listProjects(acc.id);
         for (const p of ttProjects) {
@@ -724,7 +715,7 @@ export function EmailList({ onCountChange }: { onCountChange?: (count: number | 
             >
               {convertModal.lists.map((list) => (
                 <option key={list.id} value={list.id}>
-                  {list.source === 'google-tasks' ? '🟢' : '🔵'} {list.title}
+                  🔵 {list.title}
                 </option>
               ))}
             </select>

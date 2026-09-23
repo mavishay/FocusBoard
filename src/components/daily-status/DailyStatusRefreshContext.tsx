@@ -52,14 +52,8 @@ async function syncRemoteSources(): Promise<void> {
     jobs.push(api.gmail.syncAll());
   }
 
-  const [gtAccounts, ttAccounts] = await Promise.all([
-    api.googleTasks?.listAccounts?.() ?? Promise.resolve([]),
-    api.ticktick?.listAccounts?.() ?? Promise.resolve([]),
-  ]);
+  const ttAccounts = await (api.ticktick?.listAccounts?.() ?? Promise.resolve([]));
 
-  if (gtAccounts.length > 0 && api.googleTasks?.sync) {
-    jobs.push(api.googleTasks.sync(gtAccounts[0].id));
-  }
   if (ttAccounts.length > 0 && api.ticktick?.sync) {
     jobs.push(api.ticktick.sync(ttAccounts[0].id));
   }

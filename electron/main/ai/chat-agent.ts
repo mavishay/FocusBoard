@@ -47,7 +47,7 @@ When the user asks you to look up data or take an action, respond with ONLY a JS
 Available actions:
 - create_note: params { title (required), content?, tags? } — creates a note (use when user wants to save information)
 - list_emails: params { classification?: "urgent"|"action"|"fyi"|"noise", limit?: number } — lists unread classified emails
-- list_tasks: params { limit?: number } — lists open tasks from Google Tasks and TickTick
+- list_tasks: params { limit?: number } — lists open tasks from TickTick
 - list_notes: params { search?: string, limit?: number } — lists notes
 
 Rules:
@@ -211,24 +211,6 @@ function parseAgentResponse(raw: string): AgentResponse | null {
 }
 
 function listTasks(db: Database.Database, limit = 10): unknown[] {
-  const googleRows = db
-    .prepare(
-      `SELECT gt.id, gt.title, gt.notes, gt.status, gt.due, gtl.title as list_title
-       FROM google_tasks gt
-       JOIN google_task_lists gtl ON gt.list_id = gtl.id
-       WHERE gt.is_deleted = 0 AND gt.status = 'needsAction'
-       ORDER BY gt.updated_at DESC
-       LIMIT ?`
-    )
-    .all(limit) as Array<{
-      id: string;
-      title: string;
-      notes: string | null;
-      status: string;
-      due: string | null;
-      list_title: string | null;
-    }>;
-
   const ticktickRows = db
     .prepare(
       `SELECT tt.id, tt.title, tt.content, tt.due_date, tp.name as project_name
@@ -246,16 +228,7 @@ function listTasks(db: Database.Database, limit = 10): unknown[] {
       project_name: string | null;
     }>;
 
-  const googleTasks = googleRows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    notes: r.notes,
-    due: r.due,
-    listTitle: r.list_title,
-    source: 'Google Tasks',
-  }));
-
-  const ticktickTasks = ticktickRows.map((r) => ({
+  return ticktickRows.map((r) => ({
     id: r.id,
     title: r.title,
     content: r.content,
@@ -263,8 +236,6 @@ function listTasks(db: Database.Database, limit = 10): unknown[] {
     projectTitle: r.project_name,
     source: 'TickTick',
   }));
-
-  return [...googleTasks, ...ticktickTasks].slice(0, limit);
 }
 
 function executeAction(

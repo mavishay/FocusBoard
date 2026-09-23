@@ -12,7 +12,6 @@ import {
   deleteAccount,
 } from '../auth/gmail';
 import {
-  createAccount as createGoogleTasksAccount,
   listAccounts as listGoogleTasksAccounts,
   deleteAccount as deleteGoogleTasksAccount,
 } from '../auth/google-tasks';
@@ -25,7 +24,6 @@ const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/gmail.labels',
   'https://www.googleapis.com/auth/gmail.modify',
-  'https://www.googleapis.com/auth/tasks',
   'https://www.googleapis.com/auth/calendar.readonly',
 ];
 
@@ -115,7 +113,6 @@ export function registerGmailHandlers(
       const displayName = profile.data.name ?? email;
 
       const gmailAccount = createAccount(db, email, displayName);
-      const tasksAccount = createGoogleTasksAccount(db, email, displayName);
 
       const tokenData = {
         access_token: tokens.access_token ?? '',
@@ -125,7 +122,6 @@ export function registerGmailHandlers(
       };
 
       storeTokens(db, gmailAccount.id, tokenData);
-      storeTokens(db, tasksAccount.id, tokenData);
 
       recordTelemetryEvent(db, 'gmail_connect', {
         accountId: gmailAccount.id,

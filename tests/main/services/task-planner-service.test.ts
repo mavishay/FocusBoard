@@ -96,10 +96,11 @@ describe('TaskPlannerService', () => {
     db.close();
   });
 
-  it('lists only open tasks from both sources', () => {
+  it('lists only open TickTick tasks', () => {
     const tasks = service.listOpenTasks();
-    expect(tasks).toHaveLength(2);
-    expect(tasks.map((t) => t.id).sort()).toEqual(['gt-1', 'tt-1']);
+    expect(tasks).toHaveLength(1);
+    expect(tasks.map((t) => t.id)).toEqual(['tt-1']);
+    expect(tasks[0].source).toBe('TickTick');
   });
 
   it('creates a planner session', () => {

@@ -16,15 +16,6 @@ interface NormalizedTask {
   completed: boolean;
 }
 
-function normalizeGoogleTasks(
-  tasks: Array<{ due?: string | null; dueAt?: string | null; status: string }>
-): NormalizedTask[] {
-  return tasks.map((task) => ({
-    dueAt: task.due ?? task.dueAt ?? null,
-    completed: task.status === "completed",
-  }));
-}
-
 function normalizeTickTickTasks(
   tasks: Array<{ dueDate?: string | null; status: string | number }>
 ): NormalizedTask[] {
@@ -49,14 +40,12 @@ export function useDailyMetrics(): MetricCard[] {
       const [
         remainingMeetings,
         calendarSummary,
-        googleTasks,
         ticktickTasks,
         emails,
         gmailAccounts,
       ] = await Promise.all([
         api.calendar.getTodayEvents(),
         api.calendar.getTodaySummary(),
-        api.googleTasks.listTasks(),
         api.ticktick.listTasks(),
         api.classification.getEmails({ limit: CLASSIFICATION_GET_EMAILS_MAX_LIMIT }),
         api.gmail.listAccounts(),
@@ -69,10 +58,7 @@ export function useDailyMetrics(): MetricCard[] {
         label: account.displayName,
       }));
 
-      const taskCounts = countTaskDueBuckets([
-        ...normalizeGoogleTasks(googleTasks),
-        ...normalizeTickTickTasks(ticktickTasks),
-      ]);
+      const taskCounts = countTaskDueBuckets(normalizeTickTickTasks(ticktickTasks));
 
       const unreadByAccount = mergeAccountCounts(
         accountList,

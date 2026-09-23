@@ -21,7 +21,7 @@ export function TaskPlannerWizard({ onClose, onApplied }: TaskPlannerWizardProps
   const [openTasks, setOpenTasks] = useState<Array<{
     id: string;
     title: string;
-    source: 'Google Tasks' | 'TickTick';
+    source: 'TickTick';
     dueDate: string | null;
     listTitle: string;
   }>>([]);
@@ -174,7 +174,7 @@ export function TaskPlannerWizard({ onClose, onApplied }: TaskPlannerWizardProps
               <div className="text-4xl mb-3 opacity-50">🎯</div>
               <p className="text-foreground font-medium mb-1">No open tasks</p>
               <p className="text-muted-foreground text-sm">
-                Connect Google Tasks or TickTick and add tasks to use the planner.
+                Connect TickTick in Settings and add tasks to use the planner.
               </p>
             </div>
           )}
