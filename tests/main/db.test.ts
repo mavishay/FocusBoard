@@ -89,4 +89,15 @@ describe('initializeDatabase', () => {
     expect(names).toContain('daily_quotes');
     db.close();
   });
+
+  it('creates notes table from migration 027', async () => {
+    const { initializeDatabase } = await import('../../electron/main/db');
+    const db = initializeDatabase(TEST_DB_PATH);
+    const tables = db.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+    ).all() as { name: string }[];
+    const names = tables.map(t => t.name);
+    expect(names).toContain('notes');
+    db.close();
+  });
 });

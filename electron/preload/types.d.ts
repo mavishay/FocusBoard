@@ -147,6 +147,17 @@ declare global {
     fetchedAt: string;
   }
 
+  interface Note {
+    id: string;
+    title: string;
+    content: string;
+    tags: string[];
+    source: 'manual' | 'agent';
+    pinned: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }
+
   interface ElectronAPI {
     window: {
       minimize: () => Promise<void>;
@@ -285,6 +296,25 @@ declare global {
     quote: {
       getToday: () => Promise<DailyQuote>;
       refresh: () => Promise<DailyQuote>;
+    };
+    notes: {
+      list: (options?: { search?: string; tag?: string }) => Promise<Note[]>;
+      create: (data: {
+        title: string;
+        content?: string;
+        tags?: string[];
+        source?: 'manual' | 'agent';
+        pinned?: boolean;
+      }) => Promise<Note>;
+      update: (data: {
+        id: string;
+        title?: string;
+        content?: string;
+        tags?: string[];
+        pinned?: boolean;
+      }) => Promise<Note>;
+      delete: (data: { id: string }) => Promise<{ success: boolean }>;
+      getAllTags: () => Promise<string[]>;
     };
     calendar: {
       sync: (accountId: string) => Promise<{ accountId: string; status: string; lastSyncAt: string | null; error?: string; fetched: number }>;

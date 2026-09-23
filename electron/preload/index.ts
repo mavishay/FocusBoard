@@ -100,6 +100,11 @@ const ALLOWED_INVOKE = new Set([
   'notification:send-test-notification',
   'quote:getToday',
   'quote:refresh',
+  'notes:list',
+  'notes:create',
+  'notes:update',
+  'notes:delete',
+  'notes:getAllTags',
 ] as const);
 
 const ALLOWED_ON = new Set([
@@ -363,6 +368,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
       gatedInvoke('quote:getToday') as Promise<DailyQuote>,
     refresh: () =>
       gatedInvoke('quote:refresh') as Promise<DailyQuote>,
+  },
+  notes: {
+    list: (options?: { search?: string; tag?: string }) =>
+      gatedInvoke('notes:list', options ?? {}) as Promise<Note[]>,
+    create: (data: {
+      title: string;
+      content?: string;
+      tags?: string[];
+      source?: 'manual' | 'agent';
+      pinned?: boolean;
+    }) => gatedInvoke('notes:create', data) as Promise<Note>,
+    update: (data: {
+      id: string;
+      title?: string;
+      content?: string;
+      tags?: string[];
+      pinned?: boolean;
+    }) => gatedInvoke('notes:update', data) as Promise<Note>,
+    delete: (data: { id: string }) =>
+      gatedInvoke('notes:delete', data) as Promise<{ success: boolean }>,
+    getAllTags: () =>
+      gatedInvoke('notes:getAllTags') as Promise<string[]>,
   },
   calendar: {
     sync: (accountId: string) =>
