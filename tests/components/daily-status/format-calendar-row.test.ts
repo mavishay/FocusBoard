@@ -39,6 +39,40 @@ describe("format-calendar-row", () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0].title).toBe("MIT");
+    expect(rows[0].when).toBe("10:00–11:00");
     expect(buildCalendarFootnote(rows)).toContain("Tikal 1");
+  });
+
+  it("deduplicates events with the same title and time", () => {
+    const now = new Date("2026-09-23T12:00:00.000Z");
+    const rows = buildCalendarDisplayRows(
+      [
+        {
+          id: "a:evt-primary",
+          accountId: "a1",
+          title: "VGM Sync",
+          startTime: "2026-09-23T14:30:00.000Z",
+          endTime: "2026-09-23T15:00:00.000Z",
+          calendarName: "Primary",
+          accountEmail: "user@tikal.co.il",
+        },
+        {
+          id: "a:evt-team",
+          accountId: "a1",
+          title: "VGM Sync",
+          startTime: "2026-09-23T14:30:00.000Z",
+          endTime: "2026-09-23T15:00:00.000Z",
+          calendarName: "Team",
+          accountEmail: "user@tikal.co.il",
+        },
+      ],
+      accountsById,
+      now,
+      "UTC",
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].when).toBe("14:30–15:00");
+    expect(rows[0].status).toBe("בקרוב");
   });
 });

@@ -135,42 +135,65 @@ export class CalendarSync {
         account_color: string | null;
       }>;
 
-    return events.map((e) => ({
-      id: e.id,
-      accountId: e.account_id,
-      title: e.title,
-      startTime: e.start_time,
-      endTime: e.end_time,
-      allDay: e.all_day === 1,
-      location: e.location,
-      description: e.description,
-      htmlLink: e.html_link,
-      calendarName: e.calendar_name,
-      accountEmail: e.account_email,
-      accountColor: e.account_color,
-    }));
+    return dedupeStoredEvents(
+      events.map((e) => ({
+        id: e.id,
+        accountId: e.account_id,
+        title: e.title,
+        startTime: e.start_time,
+        endTime: e.end_time,
+        allDay: e.all_day === 1,
+        location: e.location,
+        description: e.description,
+        htmlLink: e.html_link,
+        calendarName: e.calendar_name,
+        accountEmail: e.account_email,
+        accountColor: e.account_color,
+      })),
+    );
   }
 
   getTodaySummary(): {
     totalToday: number;
     byAccount: Array<{ label: string; count: number }>;
   } {
-    const rows = this.db
+    const events = this.db
       .prepare(`
-        SELECT a.display_name as label, COUNT(*) as count
+        SELECT ce.title, ce.start_time, ce.end_time, a.display_name as label
         FROM calendar_events ce
         JOIN accounts a ON ce.account_id = a.id
         WHERE date(ce.start_time) = date('now')
           AND ce.all_day = 0
-        GROUP BY a.id, a.display_name
-        ORDER BY a.display_name ASC
+        ORDER BY a.display_name ASC, ce.start_time ASC
       `)
-      .all() as Array<{ label: string; count: number }>;
+      .all() as Array<{
+        title: string;
+        start_time: string;
+        end_time: string;
+        label: string;
+      }>;
 
-    const totalToday = rows.reduce((sum, row) => sum + row.count, 0);
+    const deduped = dedupeStoredEvents(
+      events.map((event) => ({
+        title: event.title,
+        startTime: event.start_time,
+        endTime: event.end_time,
+        label: event.label,
+      })),
+    );
+
+    const counts = new Map<string, number>();
+    for (const event of deduped) {
+      counts.set(event.label, (counts.get(event.label) ?? 0) + 1);
+    }
+
+    const byAccount = Array.from(counts.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([label, count]) => ({ label, count }));
+
     return {
-      totalToday,
-      byAccount: rows.map((row) => ({ label: row.label, count: row.count })),
+      totalToday: deduped.length,
+      byAccount,
     };
   }
 
@@ -218,20 +241,22 @@ export class CalendarSync {
         account_color: string | null;
       }>;
 
-    return events.map((e) => ({
-      id: e.id,
-      accountId: e.account_id,
-      title: e.title,
-      startTime: e.start_time,
-      endTime: e.end_time,
-      allDay: e.all_day === 1,
-      location: e.location,
-      description: e.description,
-      htmlLink: e.html_link,
-      calendarName: e.calendar_name,
-      accountEmail: e.account_email,
-      accountColor: e.account_color,
-    }));
+    return dedupeStoredEvents(
+      events.map((e) => ({
+        id: e.id,
+        accountId: e.account_id,
+        title: e.title,
+        startTime: e.start_time,
+        endTime: e.end_time,
+        allDay: e.all_day === 1,
+        location: e.location,
+        description: e.description,
+        htmlLink: e.html_link,
+        calendarName: e.calendar_name,
+        accountEmail: e.account_email,
+        accountColor: e.account_color,
+      })),
+    );
   }
 
   private storeEvents(accountId: string, events: CalendarEvent[]): void {
@@ -289,4 +314,22 @@ export class CalendarSync {
     };
     this.lastStatuses.set(accountId, { ...current, ...partial });
   }
+}
+
+function dedupeStoredEvents<T extends { title: string; startTime: string; endTime: string }>(
+  events: T[],
+): T[] {
+  const seen = new Set<string>();
+  const deduped: T[] = [];
+
+  for (const event of events) {
+    const key = `${event.title}\0${event.startTime}\0${event.endTime}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    deduped.push(event);
+  }
+
+  return deduped;
 }

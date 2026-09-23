@@ -46,9 +46,9 @@ describe('Google Calendar API', () => {
     expect(typeof getAllCalendarsTodayEvents).toBe('function');
   });
 
-  it('fetches events from all accessible calendars', async () => {
+  it('deduplicates the same event returned from multiple calendars', async () => {
     const events = await getAllCalendarsTodayEvents(mockClient);
-    expect(events).toBeDefined();
-    expect(Array.isArray(events)).toBe(true);
+    expect(events).toHaveLength(1);
+    expect(events[0].summary).toBe('Team Meeting');
   });
 });

@@ -60,6 +60,8 @@
   color: var(--ds-muted);
   font-size: 0.92rem;
   line-height: 1.55;
+  direction: ltr;
+  text-align: left;
 }
 
 .daily-status .ds-quote-text em {

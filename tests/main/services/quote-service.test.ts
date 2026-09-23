@@ -78,13 +78,20 @@ describe('QuoteService', () => {
 
   it('refresh replaces today quote with a new fetch', async () => {
     globalThis.fetch = vi.fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [{ q: 'First quote', a: 'Author One' }],
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [{ q: 'Second quote', a: 'Author Two' }],
+      .mockImplementation(async (url: string) => {
+        if (url.includes('/api/today')) {
+          return {
+            ok: true,
+            json: async () => [{ q: 'First quote', a: 'Author One' }],
+          };
+        }
+        if (url.includes('/api/random')) {
+          return {
+            ok: true,
+            json: async () => [{ q: 'Second quote', a: 'Author Two' }],
+          };
+        }
+        return { ok: false, json: async () => ({}) };
       }) as typeof fetch;
 
     const { initializeDatabase } = await import('../../../electron/main/db');
@@ -98,6 +105,10 @@ describe('QuoteService', () => {
     const refreshed = await svc.refresh();
     expect(refreshed.content).toBe('Second quote');
     expect(refreshed.author).toBe('Author Two');
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'https://zenquotes.io/api/random',
+      { headers: { Accept: 'application/json' } },
+    );
 
     const cached = await svc.getToday();
     expect(cached.source).toBe('cache');

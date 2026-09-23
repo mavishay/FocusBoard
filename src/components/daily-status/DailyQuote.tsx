@@ -33,7 +33,7 @@ export function DailyQuote() {
 
   return (
     <div className="ds-quote" data-testid="daily-quote">
-      <blockquote className="ds-quote-text">
+      <blockquote className="ds-quote-text" dir="ltr">
         <em>&ldquo;{content}&rdquo;</em>
         <span className="ds-quote-author">— {author}</span>
       </blockquote>

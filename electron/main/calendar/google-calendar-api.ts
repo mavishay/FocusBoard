@@ -3,6 +3,7 @@ import type { OAuth2Client } from 'google-auth-library';
 
 export interface CalendarEvent {
   id: string;
+  iCalUID?: string;
   summary: string;
   description?: string;
   location?: string;
@@ -78,9 +79,35 @@ export async function getAllCalendarsTodayEvents(
     }
   }
   
-  return allEvents.sort((a, b) => {
+  return dedupeCalendarEvents(allEvents).sort((a, b) => {
     const aTime = a.start.dateTime ?? a.start.date ?? '';
     const bTime = b.start.dateTime ?? b.start.date ?? '';
     return aTime.localeCompare(bTime);
   });
+}
+
+function eventDedupKey(event: CalendarEvent): string {
+  if (event.iCalUID) {
+    return event.iCalUID;
+  }
+
+  const start = event.start.dateTime ?? event.start.date ?? '';
+  const end = event.end.dateTime ?? event.end.date ?? '';
+  return `${event.summary}\0${start}\0${end}`;
+}
+
+function dedupeCalendarEvents(events: CalendarEvent[]): CalendarEvent[] {
+  const seen = new Set<string>();
+  const deduped: CalendarEvent[] = [];
+
+  for (const event of events) {
+    const key = eventDedupKey(event);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    deduped.push(event);
+  }
+
+  return deduped;
 }
