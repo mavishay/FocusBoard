@@ -117,6 +117,12 @@ const ALLOWED_INVOKE = new Set([
   'chat:deleteConversation',
   'chat:getMessages',
   'chat:sendMessage',
+  'slack:connect',
+  'slack:disconnect',
+  'slack:listWorkspaces',
+  'slack:getOpenActions',
+  'slack:getSettings',
+  'slack:updateSettings',
 ] as const);
 
 const ALLOWED_ON = new Set([
@@ -444,6 +450,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
       gatedInvoke('chat:getMessages', data) as Promise<ChatMessage[]>,
     sendMessage: (data: { conversationId: string; content: string }) =>
       gatedInvoke('chat:sendMessage', data) as Promise<ChatSendMessageResult>,
+  },
+  slack: {
+    connect: (data: { token: string; displayName: string }) =>
+      gatedInvoke('slack:connect', data) as Promise<SlackWorkspace>,
+    disconnect: (workspaceId: string) =>
+      gatedInvoke('slack:disconnect', { workspaceId }) as Promise<{ success: boolean }>,
+    listWorkspaces: () =>
+      gatedInvoke('slack:listWorkspaces') as Promise<SlackWorkspace[]>,
+    getOpenActions: () =>
+      gatedInvoke('slack:getOpenActions') as Promise<SlackOpenActionsResult>,
+    getSettings: () =>
+      gatedInvoke('slack:getSettings') as Promise<SlackSettings>,
+    updateSettings: (settings: { cutoffIso?: string | null; excludedSenders?: string[] }) =>
+      gatedInvoke('slack:updateSettings', settings) as Promise<SlackSettings>,
   },
   calendar: {
     sync: (accountId: string) =>

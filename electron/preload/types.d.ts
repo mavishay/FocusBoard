@@ -95,6 +95,39 @@ declare global {
     accountCount: number;
   }
 
+  interface SlackWorkspace {
+    id: string;
+    teamId: string;
+    teamName: string;
+    displayName: string;
+  }
+
+  interface SlackOpenAction {
+    workspace: string;
+    text: string;
+    link: string;
+    ts: string;
+  }
+
+  interface SlackWorkspaceCount {
+    label: string;
+    count: number;
+  }
+
+  interface SlackOpenActionsResult {
+    actions: SlackOpenAction[];
+    totalOpen: number;
+    byWorkspace: SlackWorkspaceCount[];
+    cutoffIso: string | null;
+    scannedAt: string;
+    connected: boolean;
+  }
+
+  interface SlackSettings {
+    cutoffIso: string | null;
+    excludedSenders: string[];
+  }
+
   interface TelemetryEvent {
     id: string;
     eventType: string;
@@ -397,6 +430,14 @@ declare global {
       deleteConversation: (data: { conversationId: string }) => Promise<{ success: boolean }>;
       getMessages: (data: { conversationId: string }) => Promise<ChatMessage[]>;
       sendMessage: (data: { conversationId: string; content: string }) => Promise<ChatSendMessageResult>;
+    };
+    slack: {
+      connect: (data: { token: string; displayName: string }) => Promise<SlackWorkspace>;
+      disconnect: (workspaceId: string) => Promise<{ success: boolean }>;
+      listWorkspaces: () => Promise<SlackWorkspace[]>;
+      getOpenActions: () => Promise<SlackOpenActionsResult>;
+      getSettings: () => Promise<SlackSettings>;
+      updateSettings: (settings: { cutoffIso?: string | null; excludedSenders?: string[] }) => Promise<SlackSettings>;
     };
     calendar: {
       sync: (accountId: string) => Promise<{ accountId: string; status: string; lastSyncAt: string | null; error?: string; fetched: number }>;
