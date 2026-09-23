@@ -105,6 +105,13 @@ const ALLOWED_INVOKE = new Set([
   'notes:update',
   'notes:delete',
   'notes:getAllTags',
+  'task-planner:listOpenTasks',
+  'task-planner:createSession',
+  'task-planner:getSession',
+  'task-planner:generateSuggestions',
+  'task-planner:updateSuggestion',
+  'task-planner:acceptAll',
+  'task-planner:applySuggestions',
 ] as const);
 
 const ALLOWED_ON = new Set([
@@ -390,6 +397,36 @@ contextBridge.exposeInMainWorld('electronAPI', {
       gatedInvoke('notes:delete', data) as Promise<{ success: boolean }>,
     getAllTags: () =>
       gatedInvoke('notes:getAllTags') as Promise<string[]>,
+  },
+  taskPlanner: {
+    listOpenTasks: () =>
+      gatedInvoke('task-planner:listOpenTasks') as Promise<Array<{
+        id: string;
+        title: string;
+        source: 'Google Tasks' | 'TickTick';
+        accountId: string;
+        listId: string;
+        listTitle: string;
+        dueDate: string | null;
+      }>>,
+    createSession: () =>
+      gatedInvoke('task-planner:createSession') as Promise<{
+        id: string;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
+        suggestions: unknown[];
+      }>,
+    getSession: (sessionId: string) =>
+      gatedInvoke('task-planner:getSession', { sessionId }) as Promise<TaskPlannerSession | null>,
+    generateSuggestions: (sessionId: string) =>
+      gatedInvoke('task-planner:generateSuggestions', { sessionId }) as Promise<TaskPlannerSession>,
+    updateSuggestion: (data: { sessionId: string; suggestionId: string; accepted: boolean }) =>
+      gatedInvoke('task-planner:updateSuggestion', data) as Promise<TaskPlannerSuggestion>,
+    acceptAll: (sessionId: string) =>
+      gatedInvoke('task-planner:acceptAll', { sessionId }) as Promise<TaskPlannerSession>,
+    applySuggestions: (sessionId: string) =>
+      gatedInvoke('task-planner:applySuggestions', { sessionId }) as Promise<{ applied: number; failed: string[] }>,
   },
   calendar: {
     sync: (accountId: string) =>

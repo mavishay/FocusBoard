@@ -65,6 +65,7 @@ const UpdateTaskSchema = z.object({
   title: z.string().min(1).optional(),
   notes: z.string().optional(),
   status: z.enum(['needsAction', 'completed']).optional(),
+  due: z.string().nullable().optional(),
 });
 
 type ConnectResponse = z.infer<typeof ConnectResponseSchema>;
@@ -307,16 +308,17 @@ export function registerGoogleTasksHandlers(
       if (!parsed.success) {
         throw new Error(`Invalid payload: ${parsed.error.message}`);
       }
-      const { accountId, taskListId, taskId, title, notes, status } =
+      const { accountId, taskListId, taskId, title, notes, status, due } =
         parsed.data;
       const { getValidAccessToken } = await import('../auth/google-tasks');
       const { updateTask } = await import('../sync/google-tasks-api');
       const accessToken = await getValidAccessToken(db, accountId);
 
-      const updates: { title?: string; notes?: string; status?: string } = {};
+      const updates: { title?: string; notes?: string; status?: string; due?: string } = {};
       if (title !== undefined) updates.title = title;
       if (notes !== undefined) updates.notes = notes;
       if (status !== undefined) updates.status = status;
+      if (due !== undefined && due !== null) updates.due = due;
 
       await updateTask(accessToken, taskListId, taskId, updates);
 
@@ -329,11 +331,12 @@ export function registerGoogleTasksHandlers(
          SET title = COALESCE(?, title),
              notes = COALESCE(?, notes),
              status = COALESCE(?, status),
+             due = COALESCE(?, due),
              completed_at = COALESCE(?, completed_at),
              updated_at = ?,
              synced_at = ?
          WHERE id = ?`
-      ).run(title ?? null, notes ?? null, status ?? null, completedAt, now, now, taskId);
+      ).run(title ?? null, notes ?? null, status ?? null, due ?? null, completedAt, now, now, taskId);
 
       return { success: true };
     }

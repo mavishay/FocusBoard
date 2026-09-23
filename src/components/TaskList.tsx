@@ -1,5 +1,6 @@
 import { Component, useState, type ReactNode } from 'react';
 import { useTasks } from '@/hooks/useTasks';
+import { TaskPlannerWizard } from '@/components/TaskPlannerWizard';
 import {
   formatDueDate,
   getPriorityFromDueDate,
@@ -34,6 +35,7 @@ class ErrorBoundary extends Component<
 
 function TaskListInner() {
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showPlanner, setShowPlanner] = useState(false);
   const {
     tasks,
     syncStatus,
@@ -130,6 +132,12 @@ function TaskListInner() {
             Sync
           </button>
           <button
+            onClick={() => setShowPlanner(true)}
+            className="px-3 py-1.5 rounded border border-border bg-secondary cursor-pointer text-xs"
+          >
+            Plan Tasks
+          </button>
+          <button
             onClick={() => setShowAddForm(!showAddForm)}
             className="px-3 py-1.5 rounded border-none bg-emerald-500 text-white cursor-pointer text-xs"
           >
@@ -137,6 +145,12 @@ function TaskListInner() {
           </button>
         </div>
       </div>
+      {showPlanner && (
+        <TaskPlannerWizard
+          onClose={() => setShowPlanner(false)}
+          onApplied={loadData}
+        />
+      )}
       {showAddForm && (
         <div className="mb-4 p-3 border border-border rounded-lg bg-secondary/50">
           <div className="flex gap-2 mb-2">

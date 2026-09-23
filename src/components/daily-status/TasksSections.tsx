@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTasks } from "@/hooks/useTasks";
+import { TaskPlannerWizard } from "@/components/TaskPlannerWizard";
 import {
   bucketTasksByDueDate,
   formatImportance,
@@ -130,11 +131,13 @@ function TasksToolbar({
   syncStatus,
   onSync,
   onAdd,
+  onPlan,
   showAddForm,
 }: {
   syncStatus: { status: string; lastSyncAt: string | null } | null;
   onSync: () => void;
   onAdd: () => void;
+  onPlan: () => void;
   showAddForm: boolean;
 }) {
   return (
@@ -153,6 +156,9 @@ function TasksToolbar({
           disabled={syncStatus?.status === "syncing"}
         >
           סנכרון
+        </button>
+        <button type="button" className="ds-tasks-btn" onClick={onPlan}>
+          תכנן משימות
         </button>
         <button type="button" className="ds-tasks-btn ds-tasks-btn-primary" onClick={onAdd}>
           {showAddForm ? "סגור" : "+ הוסף משימה"}
@@ -222,6 +228,7 @@ function AddTaskForm({
 }
 
 export function TasksSections() {
+  const [showPlanner, setShowPlanner] = useState(false);
   const timeZone = getUserTimeZone();
   const now = new Date();
   const tomorrow = new Date(now);
@@ -322,8 +329,15 @@ export function TasksSections() {
         syncStatus={syncStatus}
         onSync={handleSync}
         onAdd={() => setShowAddForm(!showAddForm)}
+        onPlan={() => setShowPlanner(true)}
         showAddForm={showAddForm}
       />
+      {showPlanner && (
+        <TaskPlannerWizard
+          onClose={() => setShowPlanner(false)}
+          onApplied={loadData}
+        />
+      )}
       {showAddForm && (
         <AddTaskForm
           newTaskTitle={newTaskTitle}

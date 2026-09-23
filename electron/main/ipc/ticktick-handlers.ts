@@ -66,6 +66,7 @@ const ListTasksResponseSchema = z.array(
     projectId: z.string(),
     projectTitle: z.string().nullable(),
     source: z.string(),
+    accountId: z.string(),
   })
 );
 
@@ -96,13 +97,13 @@ function getTasksWithSource(
 ): z.infer<typeof ListTasksResponseSchema> {
   const sql = accountId
     ? `SELECT tt.id, tt.title, tt.content, tt.status, tt.due_date,
-              tt.updated_at, tt.project_id, tp.name as project_name
+              tt.updated_at, tt.project_id, tp.name as project_name, tp.account_id
        FROM ticktick_tasks tt
        JOIN ticktick_projects tp ON tt.project_id = tp.id
        WHERE tp.account_id = ? AND tt.is_deleted = 0
        ORDER BY tt.updated_at DESC`
     : `SELECT tt.id, tt.title, tt.content, tt.status, tt.due_date,
-              tt.updated_at, tt.project_id, tp.name as project_name
+              tt.updated_at, tt.project_id, tp.name as project_name, tp.account_id
        FROM ticktick_tasks tt
        JOIN ticktick_projects tp ON tt.project_id = tp.id
        WHERE tt.is_deleted = 0
@@ -118,6 +119,7 @@ function getTasksWithSource(
         updated_at: string;
         project_id: string;
         project_name: string | null;
+        account_id: string;
       }>)
     : (db.prepare(sql).all() as Array<{
         id: string;
@@ -128,6 +130,7 @@ function getTasksWithSource(
         updated_at: string;
         project_id: string;
         project_name: string | null;
+        account_id: string;
       }>);
 
   return rows.map((r) => ({
@@ -141,6 +144,7 @@ function getTasksWithSource(
     projectId: r.project_id,
     projectTitle: r.project_name,
     source: 'TickTick',
+    accountId: r.account_id,
   }));
 }
 
@@ -284,6 +288,7 @@ export function registerTickTickHandlers(
           projectId,
           projectTitle: projectRow?.name ?? null,
           source: 'TickTick',
+          accountId,
         },
       ])[0];
     }
