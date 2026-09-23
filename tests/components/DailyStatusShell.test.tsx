@@ -1,8 +1,25 @@
 // @vitest-environment jsdom
 import React from "react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { DailyStatusShell } from "../../src/components/daily-status";
+
+beforeEach(() => {
+  const currentWindow = globalThis.window;
+  Object.assign(currentWindow, {
+    electronAPI: {
+      calendar: {
+        getTodayEvents: vi.fn().mockResolvedValue([]),
+        getTodaySummary: vi.fn().mockResolvedValue({ totalToday: 0, byAccount: [] }),
+      },
+      googleTasks: { listTasks: vi.fn().mockResolvedValue([]) },
+      ticktick: { listTasks: vi.fn().mockResolvedValue([]) },
+      classification: { getEmails: vi.fn().mockResolvedValue([]) },
+      gmail: { listAccounts: vi.fn().mockResolvedValue([]) },
+      cron: { onStatusUpdate: vi.fn(() => vi.fn()) },
+    },
+  });
+});
 
 describe("DailyStatusShell", () => {
   it("renders RTL Hebrew daily status layout regions", () => {

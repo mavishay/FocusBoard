@@ -66,6 +66,10 @@ export function registerCalendarHandlers(
     return calendarSync.getTodayEvents();
   });
 
+  ipcMain.handle('calendar:getTodaySummary', async () => {
+    return calendarSync.getTodaySummary();
+  });
+
   ipcMain.handle(
     'calendar:getFilteredEvents',
     async (_, rawPayload: { startDate: string; endDate: string }): Promise<CalendarEventResponse[]> => {
