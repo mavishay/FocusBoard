@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import {
-  formatSlackCutoffHint,
+  formatSlackMetricsCutoffHint,
   formatSlackWorkspaceFooter,
 } from "./format-slack-when";
 import { useDailyStatusRefresh } from "./DailyStatusRefreshContext";
@@ -83,7 +83,7 @@ export function SlackOpenActionsProvider({ children }: { children: ReactNode }) 
       );
       setMetricsHintSuffix(
         result.connected
-          ? formatSlackCutoffHint(result.cutoffIso)
+          ? formatSlackMetricsCutoffHint(result.cutoffIso)
           : "ממתין לחיבור Slack",
       );
     } catch (error) {

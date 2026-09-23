@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { FOOTER_WORK_WINDOW } from "@/lib/daily-status-copy";
 import { getDailyStatusTimezone } from "./timezone";
 
 /** Matches legacy bot cron (every 5 min, Sun-Thu work hours, Asia/Bangkok). */
@@ -155,7 +156,9 @@ function formatFooterTimeLabel(
 }
 
 /**
- * Matches legacy HTML footer intent; Electron polls data every 5 min (no 60s window reload).
+ * Live HTML footer (2026-09-23 snapshot):
+ * `… נתונים נכתבו מחדש {HH:MM} בנגקוק · מתעדכנים כל 5 דק׳ ע״י FocusBoard HTML refresh routine · הדפדפן מרענן כל דקה · …`
+ * Electron omits the browser-reload segment (data poll only, no `location.reload`).
  */
 export function formatDailyStatusFooter(
   lastRefreshedAt: Date | null,
@@ -163,13 +166,14 @@ export function formatDailyStatusFooter(
 ): string {
   const tzLabel = timeZone.replace(/_/g, " ");
   if (!lastRefreshedAt) {
-    return `FocusBoard · ממתין לריענון ראשון · ${tzLabel} · Sun–Thu 09:00–17:30`;
+    return `FocusBoard · ממתין לריענון ראשון · ${tzLabel} · ${FOOTER_WORK_WINDOW}`;
   }
 
   const timeLabel = formatFooterTimeLabel(lastRefreshedAt, timeZone);
 
   return (
-    `FocusBoard · נתונים נכתבו מחדש ${timeLabel} · מתעדכנים כל 5 דק׳ · ` +
-    `${tzLabel} · Sun–Thu 09:00–17:30`
+    `FocusBoard · נתונים נכתבו מחדש ${timeLabel} · ` +
+    `מתעדכנים כל 5 דק׳ ע״י FocusBoard refresh routine · ` +
+    `${tzLabel} · ${FOOTER_WORK_WINDOW}`
   );
 }

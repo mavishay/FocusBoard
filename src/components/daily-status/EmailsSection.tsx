@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { buildEmailFootnoteFromCounts } from "@/lib/daily-status-copy";
 import { filterActionableEmails } from "@/lib/noise-filters";
 import { CLASSIFICATION_GET_EMAILS_MAX_LIMIT } from "@/lib/classification-constants";
 import { useDailyStatusRefresh } from "./DailyStatusRefreshContext";
@@ -41,15 +42,10 @@ function buildEmailFootnote(rows: EmailRow[]): string {
     counts.set(row.source, (counts.get(row.source) ?? 0) + 1);
   }
 
-  const breakdown = Array.from(counts.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([label, count]) => `${label}: ${count}`)
-    .join(" · ");
-
-  return (
-    `${breakdown || "אין מיילים unread"}. ` +
-    "סוננו: promotions/ads/blasts, GitHub, Gemini notes, Flagsmith, Jetserver/jetclients, " +
-    "Neon alerts, cursor[bot]/vercel[bot], Linear digest, RSVP acceptances, Zoom confirmations."
+  return buildEmailFootnoteFromCounts(
+    Array.from(counts.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([label, count]) => ({ label, count })),
   );
 }
 

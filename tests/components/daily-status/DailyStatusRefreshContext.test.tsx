@@ -35,7 +35,8 @@ describe("DailyStatusRefreshContext", () => {
     expect(footer).toContain("Asia/Bangkok");
     expect(footer).toContain("נתונים נכתבו מחדש");
     expect(footer).toContain("בנגקוק");
-    expect(footer).toContain("מתעדכנים כל 5 דק׳");
+    expect(footer).toContain("מתעדכנים כל 5 דק׳ ע״י FocusBoard refresh routine");
+    expect(footer).not.toContain("הדפדפן מרענן");
   });
 
   it("renders footer with last refresh after provider sync", async () => {

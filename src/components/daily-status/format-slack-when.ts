@@ -1,3 +1,4 @@
+import { SLACK_EXCLUSIONS_FOOTNOTE } from "@/lib/daily-status-copy";
 import { getDailyStatusTimezone } from "./timezone";
 
 export function formatSlackWhen(ts: string, now: Date = new Date()): string {
@@ -36,26 +37,54 @@ export function formatSlackWhen(ts: string, now: Date = new Date()): string {
   return `${datePart} ${timePart} · ${relative}`;
 }
 
-export function formatSlackCutoffHint(cutoffIso: string | null): string {
+/** Short cutoff label matching live HTML: `16/9 17:04`. */
+export function formatSlackCutoffShort(
+  cutoffIso: string | null,
+  timeZone: string = getDailyStatusTimezone(),
+): string | null {
   if (!cutoffIso) {
-    return "נסרקו mentions ו־DMs";
+    return null;
   }
 
   const cutoff = new Date(cutoffIso);
   if (Number.isNaN(cutoff.getTime())) {
-    return "נסרקו mentions ו־DMs";
+    return null;
   }
 
-  const formatted = cutoff.toLocaleString("he-IL", {
-    timeZone: getDailyStatusTimezone(),
-    day: "numeric",
-    month: "numeric",
+  const datePart = cutoff
+    .toLocaleDateString("he-IL", {
+      timeZone,
+      day: "numeric",
+      month: "numeric",
+    })
+    .replace(/\./g, "/");
+  const timePart = cutoff.toLocaleTimeString("he-IL", {
+    timeZone,
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
 
-  return `נסרקו mentions ו־DMs אחרי cutoff ${formatted}`;
+  return `${datePart} ${timePart}`;
+}
+
+/** Metrics strip hint suffix — live HTML: `אחרי cutoff 16/9 17:04`. */
+export function formatSlackMetricsCutoffHint(cutoffIso: string | null): string {
+  const short = formatSlackCutoffShort(cutoffIso);
+  return short ? `אחרי cutoff ${short}` : "ממתין לחיבור Slack";
+}
+
+/** Slack section scan line — live HTML footnote prefix. */
+export function formatSlackScanCutoffHint(cutoffIso: string | null): string {
+  const short = formatSlackCutoffShort(cutoffIso);
+  return short
+    ? `נסרקו mentions ו־DMs אחרי cutoff ${short}`
+    : "נסרקו mentions ו־DMs";
+}
+
+/** @deprecated Use formatSlackScanCutoffHint or formatSlackMetricsCutoffHint */
+export function formatSlackCutoffHint(cutoffIso: string | null): string {
+  return formatSlackScanCutoffHint(cutoffIso);
 }
 
 export function formatSlackWorkspaceFooter(
@@ -71,11 +100,9 @@ export function formatSlackWorkspaceFooter(
     .map(({ label, count }) => `${label}: ${count}`)
     .join(" · ");
 
-  const cutoffHint = formatSlackCutoffHint(cutoffIso);
-  const exclusions =
-    "Shavit PR-bot, Jay, Adam blockers (deferred), Linear bots מוחרגים";
+  const cutoffHint = formatSlackScanCutoffHint(cutoffIso);
 
   return counts.length > 0
-    ? `${counts} · ${cutoffHint}. ${exclusions}.`
-    : `${cutoffHint}. ${exclusions}.`;
+    ? `${counts} · ${cutoffHint}. ${SLACK_EXCLUSIONS_FOOTNOTE}`
+    : `${cutoffHint}. ${SLACK_EXCLUSIONS_FOOTNOTE}`;
 }
