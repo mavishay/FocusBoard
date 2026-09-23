@@ -105,6 +105,7 @@ describe("MetricsStrip", () => {
     expect(screen.getByTestId("metric-mail")).toHaveTextContent(
       /Velora 1 · Tikal 0 · אחרי סינון noise/
     );
+    expect(mockClassification.getEmails).toHaveBeenCalledWith({ limit: 200 });
   });
 
   it("refreshes metrics when cron status updates", async () => {

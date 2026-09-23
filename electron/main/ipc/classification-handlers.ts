@@ -23,10 +23,12 @@ const FetchEmailsSchema = z.object({
   maxResults: z.number().int().min(1).max(100).optional(),
 });
 
-const GetEmailsSchema = z.object({
+export const CLASSIFICATION_GET_EMAILS_MAX_LIMIT = 200;
+
+export const GetEmailsSchema = z.object({
   accountId: z.string().min(1).optional(),
   classification: z.enum(['urgent', 'action', 'fyi', 'noise']).optional(),
-  limit: z.number().int().min(1).max(200).optional(),
+  limit: z.number().int().min(1).max(CLASSIFICATION_GET_EMAILS_MAX_LIMIT).optional(),
   offset: z.number().int().min(0).optional(),
 });
 
