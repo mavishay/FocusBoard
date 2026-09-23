@@ -12,6 +12,7 @@ vi.mock('../../../electron/main/calendar/calendar-sync', () => ({
     }),
     syncAll: vi.fn().mockResolvedValue([]),
     getTodayEvents: vi.fn().mockReturnValue([]),
+    getTodaySummary: vi.fn().mockReturnValue({ totalToday: 0, byAccount: [] }),
     getEventsForDateRange: vi.fn().mockReturnValue([]),
   })),
 }));
@@ -39,7 +40,7 @@ describe('Calendar Handlers', () => {
 
   it('registers IPC handlers', () => {
     registerCalendarHandlers(mockIpcMain, mockDb);
-    expect(mockIpcMain.handle).toHaveBeenCalledTimes(5);
+    expect(mockIpcMain.handle).toHaveBeenCalledTimes(6);
   });
 
   it('registers calendar:sync handler', () => {
@@ -55,6 +56,11 @@ describe('Calendar Handlers', () => {
   it('registers calendar:getTodayEvents handler', () => {
     registerCalendarHandlers(mockIpcMain, mockDb);
     expect(mockIpcMain.handle).toHaveBeenCalledWith('calendar:getTodayEvents', expect.any(Function));
+  });
+
+  it('registers calendar:getTodaySummary handler', () => {
+    registerCalendarHandlers(mockIpcMain, mockDb);
+    expect(mockIpcMain.handle).toHaveBeenCalledWith('calendar:getTodaySummary', expect.any(Function));
   });
 
   it('registers calendar:getFilteredEvents handler', () => {
