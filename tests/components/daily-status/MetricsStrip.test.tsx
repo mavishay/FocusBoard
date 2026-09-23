@@ -1,0 +1,129 @@
+// @vitest-environment jsdom
+import React from "react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, act, cleanup } from "@testing-library/react";
+import { MetricsStrip } from "../../../src/components/daily-status/MetricsStrip";
+
+const mockCalendar = {
+  getTodayEvents: vi.fn(),
+  getTodaySummary: vi.fn(),
+};
+
+const mockGoogleTasks = {
+  listTasks: vi.fn(),
+};
+
+const mockTickTick = {
+  listTasks: vi.fn(),
+};
+
+const mockClassification = {
+  getEmails: vi.fn(),
+};
+
+const mockGmail = {
+  listAccounts: vi.fn(),
+};
+
+let cronStatusCallback: (() => void) | null = null;
+
+const mockCron = {
+  onStatusUpdate: vi.fn((callback: () => void) => {
+    cronStatusCallback = callback;
+    return vi.fn();
+  }),
+};
+
+function setupDefaults() {
+  mockCalendar.getTodayEvents.mockResolvedValue([
+    { id: "1", accountId: "a1" },
+    { id: "2", accountId: "a2" },
+  ]);
+  mockCalendar.getTodaySummary.mockResolvedValue({
+    totalToday: 4,
+    byAccount: [
+      { label: "Velora", count: 1 },
+      { label: "Tikal", count: 3 },
+    ],
+  });
+  mockGoogleTasks.listTasks.mockResolvedValue([
+    { due: "2026-09-23T00:00:00Z", status: "needsAction" },
+  ]);
+  mockTickTick.listTasks.mockResolvedValue([
+    { dueDate: "2026-09-22T00:00:00Z", status: "0" },
+  ]);
+  mockClassification.getEmails.mockResolvedValue([
+    { accountId: "a1", classification: "urgent" },
+    { accountId: "a2", classification: "noise" },
+  ]);
+  mockGmail.listAccounts.mockResolvedValue([
+    { id: "a1", email: "v@x.com", displayName: "Velora", color: null },
+    { id: "a2", email: "t@x.com", displayName: "Tikal", color: null },
+  ]);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-23T12:00:00Z"));
+  cronStatusCallback = null;
+  setupDefaults();
+  Object.assign(window, {
+    electronAPI: {
+      calendar: mockCalendar,
+      googleTasks: mockGoogleTasks,
+      ticktick: mockTickTick,
+      classification: mockClassification,
+      gmail: mockGmail,
+      cron: mockCron,
+    },
+  });
+});
+
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
+
+describe("MetricsStrip", () => {
+  it("renders four live KPI cards from IPC data", async () => {
+    await act(async () => {
+      render(<MetricsStrip />);
+    });
+
+    expect(screen.getByTestId("metrics-strip")).toBeInTheDocument();
+    expect(screen.getByTestId("metric-meetings")).toHaveClass("ds-warn");
+    expect(screen.getByTestId("metric-tasks")).toHaveClass("ds-ok");
+    expect(screen.getByTestId("metric-mail")).toHaveClass("ds-ok");
+    expect(screen.getByTestId("metric-slack")).toHaveClass("ds-ok");
+    expect(screen.getByTestId("metric-meetings")).toHaveTextContent("2");
+    expect(screen.getByTestId("metric-tasks")).toHaveTextContent("1");
+    expect(screen.getByTestId("metric-mail")).toHaveTextContent("1");
+    expect(screen.getByTestId("metric-meetings")).toHaveTextContent(
+      /אירועים היום 4/
+    );
+    expect(screen.getByTestId("metric-mail")).toHaveTextContent(
+      /Velora 1 · Tikal 0 · אחרי סינון noise/
+    );
+  });
+
+  it("refreshes metrics when cron status updates", async () => {
+    await act(async () => {
+      render(<MetricsStrip />);
+    });
+
+    mockCalendar.getTodayEvents.mockResolvedValue([
+      { id: "1", accountId: "a1" },
+      { id: "2", accountId: "a1" },
+      { id: "3", accountId: "a1" },
+      { id: "4", accountId: "a1" },
+    ]);
+
+    await act(async () => {
+      cronStatusCallback?.();
+    });
+
+    expect(mockCalendar.getTodayEvents).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId("metric-meetings")).toHaveClass("ds-hot");
+  });
+});

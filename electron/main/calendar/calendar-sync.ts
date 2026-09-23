@@ -151,6 +151,29 @@ export class CalendarSync {
     }));
   }
 
+  getTodaySummary(): {
+    totalToday: number;
+    byAccount: Array<{ label: string; count: number }>;
+  } {
+    const rows = this.db
+      .prepare(`
+        SELECT a.display_name as label, COUNT(*) as count
+        FROM calendar_events ce
+        JOIN accounts a ON ce.account_id = a.id
+        WHERE date(ce.start_time) = date('now')
+          AND ce.all_day = 0
+        GROUP BY a.id, a.display_name
+        ORDER BY a.display_name ASC
+      `)
+      .all() as Array<{ label: string; count: number }>;
+
+    const totalToday = rows.reduce((sum, row) => sum + row.count, 0);
+    return {
+      totalToday,
+      byAccount: rows.map((row) => ({ label: row.label, count: row.count })),
+    };
+  }
+
   getEventsForDateRange(startDate: string, endDate: string): Array<{
     id: string;
     accountId: string;

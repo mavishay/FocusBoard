@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
 import { DailyStatusShell } from "../../src/components/daily-status";
 
 const mockGoogleTasks = {
@@ -21,13 +21,24 @@ const mockGmail = {
 };
 
 beforeEach(() => {
-  Object.assign(window, {
+  const currentWindow = globalThis.window;
+  Object.assign(currentWindow, {
     electronAPI: {
+      calendar: {
+        getTodayEvents: vi.fn().mockResolvedValue([]),
+        getTodaySummary: vi.fn().mockResolvedValue({ totalToday: 0, byAccount: [] }),
+      },
       googleTasks: mockGoogleTasks,
       ticktick: mockTickTick,
+      classification: { getEmails: vi.fn().mockResolvedValue([]) },
       gmail: mockGmail,
+      cron: { onStatusUpdate: vi.fn(() => vi.fn()) },
     },
   });
+});
+
+afterEach(() => {
+  cleanup();
 });
 
 describe("DailyStatusShell", () => {
