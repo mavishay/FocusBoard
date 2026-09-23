@@ -98,6 +98,8 @@ const ALLOWED_INVOKE = new Set([
   'notification:get-scheduled-settings',
   'notification:set-scheduled-settings',
   'notification:send-test-notification',
+  'quote:getToday',
+  'quote:refresh',
 ] as const);
 
 const ALLOWED_ON = new Set([
@@ -355,6 +357,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       gatedInvoke('workload:calculate') as Promise<WorkloadSnapshot>,
     getLatest: () =>
       gatedInvoke('workload:getLatest') as Promise<WorkloadSnapshot | null>,
+  },
+  quote: {
+    getToday: () =>
+      gatedInvoke('quote:getToday') as Promise<DailyQuote>,
+    refresh: () =>
+      gatedInvoke('quote:refresh') as Promise<DailyQuote>,
   },
   calendar: {
     sync: (accountId: string) =>
