@@ -210,6 +210,123 @@
   margin: 10px 0 0;
 }
 
+.daily-status .ds-tasks-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.daily-status .ds-tasks-sync-meta {
+  color: var(--ds-muted);
+  font-size: 0.78rem;
+}
+
+.daily-status .ds-tasks-toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.daily-status .ds-tasks-btn {
+  border: 1px solid var(--ds-border);
+  background: rgba(139, 155, 180, 0.12);
+  color: var(--ds-text);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.daily-status .ds-tasks-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.daily-status .ds-tasks-btn-primary {
+  background: rgba(62, 207, 142, 0.2);
+  border-color: rgba(62, 207, 142, 0.35);
+  color: var(--ds-green);
+}
+
+.daily-status .ds-add-task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--ds-border);
+  border-radius: 12px;
+  background: rgba(26, 35, 50, 0.6);
+}
+
+.daily-status .ds-add-task-input {
+  width: 100%;
+  border: 1px solid var(--ds-border);
+  border-radius: 8px;
+  background: var(--ds-card);
+  color: var(--ds-text);
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+.daily-status .ds-add-task-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.daily-status .ds-task-row:hover .ds-task-delete {
+  opacity: 1;
+}
+
+.daily-status .ds-task-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.daily-status .ds-task-checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.daily-status .ds-task-title {
+  border: none;
+  background: transparent;
+  color: var(--ds-text);
+  text-align: right;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.daily-status .ds-task-title.ds-task-overdue {
+  color: var(--ds-red);
+  font-weight: 600;
+}
+
+.daily-status .ds-task-edit-input {
+  flex: 1;
+  border: 1px solid var(--ds-border);
+  border-radius: 6px;
+  background: var(--ds-card);
+  color: var(--ds-text);
+  padding: 4px 8px;
+  font-size: 0.85rem;
+}
+
+.daily-status .ds-task-delete {
+  border: none;
+  background: transparent;
+  color: var(--ds-red);
+  opacity: 0;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 4px;
+  transition: opacity 0.15s ease;
+}
+
 .daily-status .ds-footer {
   margin-top: 20px;
   color: var(--ds-muted);
