@@ -176,7 +176,7 @@ function TaskListInner() {
             >
               {availableLists.map((list) => (
                 <option key={list.id} value={list.id}>
-                  {list.source === 'google-tasks' ? '🟢 ' : '🔵 '}{list.title}
+                  🔵 {list.title}
                 </option>
               ))}
             </select>
@@ -260,7 +260,7 @@ function renderTaskRow({
     >
       <span
         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap text-white shrink-0"
-        style={{ background: task.source === 'Google Tasks' ? GOOGLE_BLUE : TICKTICK_BLUE }}
+        style={{ background: TICKTICK_BLUE }}
         title={task.source}
         aria-label={task.source}
       >

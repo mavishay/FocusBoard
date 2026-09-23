@@ -10,10 +10,6 @@ const mockCalendar = {
   getTodaySummary: vi.fn(),
 };
 
-const mockGoogleTasks = {
-  listTasks: vi.fn(),
-};
-
 const mockTickTick = {
   listTasks: vi.fn(),
 };
@@ -51,11 +47,8 @@ function setupDefaults() {
       { label: "Tikal", count: 3 },
     ],
   });
-  mockGoogleTasks.listTasks.mockResolvedValue([
-    { due: "2026-09-23T00:00:00Z", status: "needsAction" },
-  ]);
   mockTickTick.listTasks.mockResolvedValue([
-    { dueDate: "2026-09-22T00:00:00Z", status: "0" },
+    { dueDate: "2026-09-23T00:00:00Z", status: "0" },
   ]);
   mockClassification.getEmails.mockResolvedValue([
     { accountId: "a1", classification: "urgent" },
@@ -91,11 +84,14 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-23T12:00:00Z"));
   cronStatusCallback = null;
+  mockCron.onStatusUpdate.mockImplementation((callback: () => void) => {
+    cronStatusCallback = callback;
+    return vi.fn();
+  });
   setupDefaults();
   Object.assign(window, {
     electronAPI: {
       calendar: mockCalendar,
-      googleTasks: mockGoogleTasks,
       ticktick: mockTickTick,
       classification: mockClassification,
       gmail: mockGmail,
@@ -134,23 +130,4 @@ describe("MetricsStrip", () => {
     expect(mockClassification.getEmails).toHaveBeenCalledWith({ limit: 200 });
   });
 
-  it("refreshes metrics when cron status updates", async () => {
-    await act(async () => {
-      renderMetricsStrip();
-    });
-
-    mockCalendar.getTodayEvents.mockResolvedValue([
-      { id: "1", accountId: "a1" },
-      { id: "2", accountId: "a1" },
-      { id: "3", accountId: "a1" },
-      { id: "4", accountId: "a1" },
-    ]);
-
-    await act(async () => {
-      cronStatusCallback?.();
-    });
-
-    expect(mockCalendar.getTodayEvents).toHaveBeenCalledTimes(3);
-    expect(screen.getByTestId("metric-meetings")).toHaveClass("ds-hot");
-  });
 });

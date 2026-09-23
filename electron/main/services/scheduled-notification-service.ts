@@ -169,13 +169,10 @@ export class ScheduledNotificationService implements ManagedService {
 
     const todayStr = now.toISOString().split('T')[0];
     const todayTasks = this.db.prepare(`
-      SELECT title, 'Google Tasks' as source FROM google_tasks
-      WHERE due LIKE ? AND status = 'needsAction' AND is_deleted = 0
-      UNION ALL
       SELECT title, 'TickTick' as source FROM ticktick_tasks
       WHERE due_date LIKE ? AND status = 0 AND is_deleted = 0
       LIMIT 5
-    `).all(`${todayStr}%`, `${todayStr}%`) as Array<{ title: string; source: string }>;
+    `).all(`${todayStr}%`) as Array<{ title: string; source: string }>;
 
     return {
       unreadCount: emailStats.total,

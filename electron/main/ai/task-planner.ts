@@ -7,7 +7,7 @@ export type PlannerAction = 'reschedule' | 'complete' | 'dismiss' | 'keep';
 export interface PlannerTaskInput {
   taskId: string;
   title: string;
-  source: 'Google Tasks' | 'TickTick';
+  source: 'TickTick';
   dueDate: string | null;
   listTitle: string;
 }

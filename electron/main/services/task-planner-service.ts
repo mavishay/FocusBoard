@@ -6,15 +6,13 @@ import {
   type PlannerTaskInput,
 } from '../ai/task-planner';
 import { WorkloadService } from './workload-service';
-import { getValidAccessToken } from '../auth/google-tasks';
 import { getAccessToken } from '../auth/ticktick';
-import { updateTask as updateGoogleTask, deleteTask as deleteGoogleTask } from '../sync/google-tasks-api';
 import { TickTickAdapter } from '../sync/ticktick-adapter';
 
 export interface OpenPlannerTask {
   id: string;
   title: string;
-  source: 'Google Tasks' | 'TickTick';
+  source: 'TickTick';
   accountId: string;
   listId: string;
   listTitle: string;
@@ -26,7 +24,7 @@ export interface PlannerSuggestionRecord {
   sessionId: string;
   taskId: string;
   taskTitle: string;
-  source: 'Google Tasks' | 'TickTick';
+  source: 'TickTick';
   accountId: string;
   listId: string;
   currentDueDate: string | null;
@@ -45,31 +43,10 @@ export interface PlannerSession {
   suggestions: PlannerSuggestionRecord[];
 }
 
-function toGoogleDueIso(dateStr: string): string {
-  return `${dateStr}T00:00:00.000Z`;
-}
-
 export class TaskPlannerService {
   constructor(private db: Database.Database) {}
 
   listOpenTasks(): OpenPlannerTask[] {
-    const googleRows = this.db
-      .prepare(
-        `SELECT gt.id, gt.title, gt.due, gt.list_id, gtl.title as list_title, gtl.account_id
-         FROM google_tasks gt
-         JOIN google_task_lists gtl ON gt.list_id = gtl.id
-         WHERE gt.status = 'needsAction' AND gt.is_deleted = 0
-         ORDER BY gt.updated_at DESC`,
-      )
-      .all() as Array<{
-        id: string;
-        title: string;
-        due: string | null;
-        list_id: string;
-        list_title: string | null;
-        account_id: string;
-      }>;
-
     const ticktickRows = this.db
       .prepare(
         `SELECT tt.id, tt.title, tt.due_date, tt.project_id, tp.name as project_name, tp.account_id
@@ -87,17 +64,7 @@ export class TaskPlannerService {
         account_id: string;
       }>;
 
-    const googleTasks: OpenPlannerTask[] = googleRows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      source: 'Google Tasks',
-      accountId: r.account_id,
-      listId: r.list_id,
-      listTitle: r.list_title ?? '',
-      dueDate: r.due,
-    }));
-
-    const ticktickTasks: OpenPlannerTask[] = ticktickRows.map((r) => ({
+    return ticktickRows.map((r) => ({
       id: r.id,
       title: r.title,
       source: 'TickTick',
@@ -106,8 +73,6 @@ export class TaskPlannerService {
       listTitle: r.project_name ?? '',
       dueDate: r.due_date,
     }));
-
-    return [...googleTasks, ...ticktickTasks];
   }
 
   createSession(): PlannerSession {
@@ -171,7 +136,7 @@ export class TaskPlannerService {
         sessionId: s.session_id,
         taskId: s.task_id,
         taskTitle: s.task_title,
-        source: s.source as 'Google Tasks' | 'TickTick',
+        source: s.source as 'TickTick',
         accountId: s.account_id,
         listId: s.list_id,
         currentDueDate: s.current_due_date,
@@ -300,11 +265,7 @@ export class TaskPlannerService {
 
     for (const suggestion of toApply) {
       try {
-        if (suggestion.source === 'Google Tasks') {
-          await this.applyGoogleSuggestion(suggestion);
-        } else {
-          await this.applyTickTickSuggestion(suggestion);
-        }
+        await this.applyTickTickSuggestion(suggestion);
 
         this.db
           .prepare(`UPDATE task_planner_suggestions SET applied_at = ? WHERE id = ?`)
@@ -321,30 +282,6 @@ export class TaskPlannerService {
       .run(now, sessionId);
 
     return { applied, failed };
-  }
-
-  private async applyGoogleSuggestion(suggestion: PlannerSuggestionRecord): Promise<void> {
-    const accessToken = await getValidAccessToken(this.db, suggestion.accountId);
-
-    if (suggestion.action === 'complete') {
-      await updateGoogleTask(accessToken, suggestion.listId, suggestion.taskId, {
-        status: 'completed',
-      });
-      this.db
-        .prepare(
-          `UPDATE google_tasks SET status = 'completed', completed_at = ?, updated_at = ?, synced_at = ? WHERE id = ?`,
-        )
-        .run(new Date().toISOString(), new Date().toISOString(), new Date().toISOString(), suggestion.taskId);
-    } else if (suggestion.action === 'dismiss') {
-      await deleteGoogleTask(accessToken, suggestion.listId, suggestion.taskId);
-      this.db.prepare(`DELETE FROM google_tasks WHERE id = ?`).run(suggestion.taskId);
-    } else if (suggestion.action === 'reschedule' && suggestion.suggestedDueDate) {
-      const dueIso = toGoogleDueIso(suggestion.suggestedDueDate);
-      await updateGoogleTask(accessToken, suggestion.listId, suggestion.taskId, { due: dueIso });
-      this.db
-        .prepare(`UPDATE google_tasks SET due = ?, updated_at = ?, synced_at = ? WHERE id = ?`)
-        .run(dueIso, new Date().toISOString(), new Date().toISOString(), suggestion.taskId);
-    }
   }
 
   private async applyTickTickSuggestion(suggestion: PlannerSuggestionRecord): Promise<void> {

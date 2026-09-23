@@ -37,6 +37,12 @@ interface SlackSettings {
   excludedSenders: string[];
 }
 
+interface TickTickAccount {
+  id: string;
+  email: string;
+  displayName: string;
+}
+
 const PRESET_COLORS = [
   "#1976d2", // Blue
   "#388e3c", // Green
@@ -126,6 +132,12 @@ export function Settings() {
   const [slackConnecting, setSlackConnecting] = useState(false);
   const [slackSaving, setSlackSaving] = useState(false);
   const [slackError, setSlackError] = useState<string | null>(null);
+  const [ticktickAccounts, setTicktickAccounts] = useState<TickTickAccount[]>([]);
+  const [ticktickToken, setTicktickToken] = useState("");
+  const [ticktickEmail, setTicktickEmail] = useState("");
+  const [ticktickDisplayName, setTicktickDisplayName] = useState("");
+  const [ticktickConnecting, setTicktickConnecting] = useState(false);
+  const [ticktickError, setTicktickError] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
 
   const loadKeys = useCallback(async () => {
@@ -200,6 +212,15 @@ export function Settings() {
     }
   }, []);
 
+  const loadTicktickAccounts = useCallback(async () => {
+    try {
+      const accounts = await window.electronAPI.ticktick.listAccounts();
+      setTicktickAccounts(accounts);
+    } catch (err) {
+      console.error("Failed to load TickTick accounts:", err);
+    }
+  }, []);
+
   useEffect(() => {
     loadKeys();
     loadGmailAccounts();
@@ -209,6 +230,7 @@ export function Settings() {
     loadRetentionSettings();
     loadSlackWorkspaces();
     loadSlackSettings();
+    loadTicktickAccounts();
   }, [
     loadKeys,
     loadGmailAccounts,
@@ -218,6 +240,7 @@ export function Settings() {
     loadRetentionSettings,
     loadSlackWorkspaces,
     loadSlackSettings,
+    loadTicktickAccounts,
   ]);
 
   const handleSave = async () => {
@@ -465,7 +488,7 @@ export function Settings() {
       <section className="mb-8">
         <h2 className="text-lg mb-3">Google Accounts</h2>
         <p className="text-muted-foreground text-sm mb-4">
-          Connect your Google account to access Gmail and Google Tasks.
+          Connect your Google account to access Gmail and Calendar.
         </p>
 
         {gmailAccounts.length === 0 ? (
@@ -509,6 +532,129 @@ export function Settings() {
         >
           {connecting ? "Connecting..." : "Connect Gmail Account"}
         </button>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-lg mb-3">TickTick</h2>
+        <p className="text-muted-foreground text-sm mb-4">
+          Connect TickTick to sync tasks into Daily Status. Generate an API token
+          in TickTick: open{" "}
+          <a
+            href="https://ticktick.com/user/settings"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline"
+          >
+            Settings → Integrations → API Token
+          </a>
+          . Paste the token below; it is encrypted locally and never logged.
+        </p>
+
+        {ticktickAccounts.length === 0 ? (
+          <p className="text-muted-foreground text-sm mb-4">
+            No TickTick accounts connected.
+          </p>
+        ) : (
+          <div className="mb-4">
+            {ticktickAccounts.map((account) => (
+              <div
+                key={account.id}
+                className="flex items-center justify-between p-3 border border-border rounded-lg mb-2"
+              >
+                <div>
+                  <div className="font-semibold text-sm">
+                    {account.displayName}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {account.email}
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      await window.electronAPI.ticktick.disconnect(account.id);
+                      await loadTicktickAccounts();
+                    } catch (err) {
+                      console.error("Failed to disconnect TickTick account:", err);
+                    }
+                  }}
+                  className="bg-transparent border border-destructive text-destructive rounded px-2 py-1 cursor-pointer text-xs"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 max-w-lg mb-4">
+          <input
+            type="text"
+            placeholder="Account label (e.g. Personal)"
+            value={ticktickDisplayName}
+            onChange={(e) => setTicktickDisplayName(e.target.value)}
+            className="p-2 rounded border border-border text-sm"
+          />
+          <input
+            type="email"
+            placeholder="TickTick account email"
+            value={ticktickEmail}
+            onChange={(e) => setTicktickEmail(e.target.value)}
+            className="p-2 rounded border border-border text-sm"
+          />
+          <input
+            type="password"
+            placeholder="TickTick API token"
+            value={ticktickToken}
+            onChange={(e) => setTicktickToken(e.target.value)}
+            className="p-2 rounded border border-border text-sm font-mono"
+          />
+          {ticktickError && (
+            <p className="text-destructive text-sm">{ticktickError}</p>
+          )}
+          <button
+            onClick={async () => {
+              setTicktickError(null);
+              setTicktickConnecting(true);
+              try {
+                const account = await window.electronAPI.ticktick.connect({
+                  token: ticktickToken,
+                  email: ticktickEmail.trim(),
+                  displayName: ticktickDisplayName.trim(),
+                });
+                setTicktickToken("");
+                setTicktickEmail("");
+                setTicktickDisplayName("");
+                await window.electronAPI.ticktick.sync(account.id);
+                await loadTicktickAccounts();
+              } catch (err) {
+                setTicktickError(
+                  err instanceof Error
+                    ? err.message
+                    : "Failed to connect TickTick account",
+                );
+              } finally {
+                setTicktickConnecting(false);
+              }
+            }}
+            disabled={
+              ticktickConnecting ||
+              !ticktickToken.trim() ||
+              !ticktickEmail.trim() ||
+              !ticktickDisplayName.trim()
+            }
+            className={`px-5 py-2.5 rounded border-none text-sm font-semibold self-start ${
+              ticktickConnecting ||
+              !ticktickToken.trim() ||
+              !ticktickEmail.trim() ||
+              !ticktickDisplayName.trim()
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-primary text-primary-foreground cursor-pointer"
+            }`}
+          >
+            {ticktickConnecting ? "Connecting..." : "Connect TickTick"}
+          </button>
+        </div>
       </section>
 
       <section className="mb-8">

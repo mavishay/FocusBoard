@@ -28,19 +28,9 @@ export class WorkloadService {
       .prepare("SELECT COUNT(*) as c FROM emails WHERE is_read = 0 AND classification = 'action'")
       .get() as { c: number };
 
-    // Count overdue tasks (Google Tasks) — due < today, not deleted
-    const gtOverdue = this.db
-      .prepare("SELECT COUNT(*) as c FROM google_tasks WHERE status = 'needsAction' AND is_deleted = 0 AND due IS NOT NULL AND date(due) < date('now')")
-      .get() as { c: number };
-
     // Count overdue tasks (TickTick) — due_date < today, not deleted
     const ttOverdue = this.db
       .prepare("SELECT COUNT(*) as c FROM ticktick_tasks WHERE status = 0 AND is_deleted = 0 AND due_date IS NOT NULL AND due_date < date('now')")
-      .get() as { c: number };
-
-    // Count today's tasks (Google Tasks) — not deleted
-    const gtToday = this.db
-      .prepare("SELECT COUNT(*) as c FROM google_tasks WHERE status = 'needsAction' AND is_deleted = 0 AND due IS NOT NULL AND date(due) = date('now')")
       .get() as { c: number };
 
     // Count today's tasks (TickTick) — not deleted
@@ -55,8 +45,8 @@ export class WorkloadService {
 
     const urgentEmails = urgentRow.c;
     const actionEmails = actionRow.c;
-    const overdueTasks = gtOverdue.c + ttOverdue.c;
-    const todayTasks = gtToday.c + ttToday.c;
+    const overdueTasks = ttOverdue.c;
+    const todayTasks = ttToday.c;
     const todayEvents = eventsRow.c;
 
     // Score calculation: 0-100
