@@ -3,6 +3,7 @@ import {
   Home,
   Settings,
   StickyNote,
+  MessageSquare,
   Sun,
   Moon,
   PanelLeftClose,
@@ -20,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 const NAV_ITEMS = [
   { icon: Home, label: "Dashboard", to: "/" },
   { icon: StickyNote, label: "Notes", to: "/notes" },
+  { icon: MessageSquare, label: "Chat", to: "/conversations" },
 ] as const;
 
 export function Sidebar() {

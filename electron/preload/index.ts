@@ -112,6 +112,11 @@ const ALLOWED_INVOKE = new Set([
   'task-planner:updateSuggestion',
   'task-planner:acceptAll',
   'task-planner:applySuggestions',
+  'chat:listConversations',
+  'chat:createConversation',
+  'chat:deleteConversation',
+  'chat:getMessages',
+  'chat:sendMessage',
 ] as const);
 
 const ALLOWED_ON = new Set([
@@ -427,6 +432,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
       gatedInvoke('task-planner:acceptAll', { sessionId }) as Promise<TaskPlannerSession>,
     applySuggestions: (sessionId: string) =>
       gatedInvoke('task-planner:applySuggestions', { sessionId }) as Promise<{ applied: number; failed: string[] }>,
+  },
+  chat: {
+    listConversations: () =>
+      gatedInvoke('chat:listConversations') as Promise<ChatConversation[]>,
+    createConversation: (data?: { title?: string }) =>
+      gatedInvoke('chat:createConversation', data ?? {}) as Promise<ChatConversation>,
+    deleteConversation: (data: { conversationId: string }) =>
+      gatedInvoke('chat:deleteConversation', data) as Promise<{ success: boolean }>,
+    getMessages: (data: { conversationId: string }) =>
+      gatedInvoke('chat:getMessages', data) as Promise<ChatMessage[]>,
+    sendMessage: (data: { conversationId: string; content: string }) =>
+      gatedInvoke('chat:sendMessage', data) as Promise<ChatSendMessageResult>,
   },
   calendar: {
     sync: (accountId: string) =>

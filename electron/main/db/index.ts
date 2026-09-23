@@ -31,6 +31,7 @@ import migration024 from './migrations/024-scheduled-notifications.sql?raw';
 import migration025 from './migrations/025-reserved-slack.sql?raw';
 import migration026 from './migrations/026-daily-quotes.sql?raw';
 import migration027 from './migrations/027-notes.sql?raw';
+import migration028 from './migrations/028-chat-conversations.sql?raw';
 import migration029 from './migrations/029-task-planner.sql?raw';
 
 const MIGRATIONS: Record<number, string> = {
@@ -61,6 +62,7 @@ const MIGRATIONS: Record<number, string> = {
   25: migration025,
   26: migration026,
   27: migration027,
+  28: migration028,
   29: migration029,
 };
 
