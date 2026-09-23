@@ -12,7 +12,19 @@ import {
 } from "@/lib/noise-filters";
 
 describe("noise-filters email rules", () => {
-  it("marks GitHub and bot senders as noise", () => {
+  it("marks standing noise senders from email-triage.md", () => {
+    expect(
+      isEmailNoise({
+        fromAddress: "gemini-notes@google.com",
+        subject: "VGM Sync notes",
+      }),
+    ).toBe(true);
+    expect(
+      isEmailNoise({
+        fromAddress: "alerts@email.neon.tech",
+        subject: "Spending threshold exceeded",
+      }),
+    ).toBe(true);
     expect(
       isEmailNoise({
         fromAddress: "notifications@github.com",

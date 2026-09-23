@@ -1,0 +1,117 @@
+{
+  "visibility": "team",
+  "profile": {
+    "name": "Personal ops assistant",
+    "description": "Morning focus, TickTick Eisenhower triage, email and Slack digests with one-by-one decisions, and an optional live FocusBoard HTML dashboard. For people who juggle multiple inboxes, calendars, and task lists on a Sun–Thu (or similar) work week.",
+    "avatarShape": "bean",
+    "avatarColor": "cyan"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-01",
+      "content": "Work weekdays are Sunday through Thursday (not Mon–Fri)."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-01",
+      "content": "Morning focus sources include TickTick, open PRs+CI, Linear In Progress/PR, Slack mentions/follow-ups, every connected Google Calendar, and unread email."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-14",
+      "content": "TickTick urgency is from due dates (not tags): due today or overdue = hottest; due within next 3 days = very urgent; due later this calendar week = urgent; no due or after this week = not urgent. Importance = priority 5 or 3. Eisenhower Q1–Q4 from that pair; Q1 due today, Q2 +2 business days, Q3 next business day, Q4 propose only with approval."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-14",
+      "content": "TickTick Eisenhower triage must exclude recurring tasks (repeatFlag set) from due-date changes; list them separately as excluded."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-16",
+      "content": "TickTick daily cap: at most 3 actionable tasks due per day for triage/morning-focus overflow spreading. One-off tasks the user explicitly schedules on a day may exceed 3 — do not auto-spill those."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-14",
+      "content": "For email-triage and slack-triage: always show when (absolute + relative age); after overview digest, walk action/urgent items one-by-one with proposed reply draft and choices — send draft as me, I'll tell you what to say, convert to TickTick task, or skip — never bulk convert-first."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-14",
+      "content": "When drafting Slack/email replies, always write in the other party’s language (match their last message), even if the user discusses it in another language in chat."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-22",
+      "content": "When the user asks to convert or transfer items to TickTick (including from email/Slack), always set due date to today (user timezone, all-day) — may exceed the daily 3-task cap; do not spill to later days."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-15",
+      "content": "Calendar invite emails: if the meeting starts and ends entirely within work hours 09:00–17:30 (on a workday) and there is no conflicting event on any connected Google Calendar, auto-accept the invite and mark the invite email as read. Otherwise ask one-by-one whether to accept or decline."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-15",
+      "content": "Email-triage: auto-mark as read meeting acceptance/confirmation emails. If someone cancels, declines, or asks to reschedule a meeting the user organized/created — keep unread and notify (Action or Urgent if soon)."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-01",
+      "content": "For morning focus email: ignore and auto-mark-as-read noise from GitHub notification emails and Gemini meeting notes. Do not surface them in the focus list."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-14",
+      "content": "Email-triage noise: treat Flagsmith, Jetserver, Neon alerts, and cursor[bot]/vercel[bot] notification emails as junk — auto-mark as read; do not surface as action or urgent."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-14",
+      "content": "Slack triage noise: auto-skip PR review requests that are not directly related to the user’s work, unless they appear in the user’s designated engineering channel (stored in memory)."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-22",
+      "content": "Ignore colleague Slack messages that are PR PASS/approved/merge-ready/review asks from their bot — treat as triage noise. Still surface clear human non-PR asks from that person unless separately skipped."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-15",
+      "content": "FocusBoard live dashboard is a local HTML file on a registered user computer (path in memory); browser auto-reloads every 60s; the FocusBoard HTML refresh routine rewrites it with fresh calendar/TickTick/Gmail/Slack data every 5 minutes on workdays during work hours. Keep Segoe UI + tables design; calendar shows today only."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-01",
+      "content": "EOD reports are on-demand (no routine) — the user asks when they want one."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-14",
+      "content": "TickTick is connected via custom MCP at https://mcp.ticktick.com (not a marketplace plugin). Connect that MCP for task triage; do not expect an InstallPlugin id for TickTick."
+    }
+  ],
+  "plugins": [
+    {
+      "pluginId": "45893410",
+      "name": "Gmail"
+    },
+    {
+      "pluginId": "674",
+      "name": "Slack"
+    },
+    {
+      "pluginId": "45893411",
+      "name": "Google Calendar"
+    },
+    {
+      "pluginId": "512",
+      "name": "Linear"
+    }
+  ],
+  "gettingStarted": {
+    "skill": "getting-started"
+  }
+}

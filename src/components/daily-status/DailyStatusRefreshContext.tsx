@@ -7,10 +7,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { FOOTER_WORK_WINDOW } from "@/lib/daily-status-copy";
+import {
+  ELECTRON_FOOTER_DATA_NOTE,
+  FOOTER_WORK_WINDOW,
+} from "@/lib/daily-status-copy";
 import { getDailyStatusTimezone } from "./timezone";
 
-/** Matches legacy bot cron (every 5 min, Sun-Thu work hours, Asia/Bangkok). */
+/** In-app poll every 5 min while daily-status visible (cron: 9-17 Sun-Thu Asia/Bangkok). */
 export const DAILY_STATUS_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 export interface DailyStatusRefreshState {
@@ -173,7 +176,7 @@ export function formatDailyStatusFooter(
 
   return (
     `FocusBoard · נתונים נכתבו מחדש ${timeLabel} · ` +
-    `מתעדכנים כל 5 דק׳ ע״י FocusBoard refresh routine · ` +
+    `${ELECTRON_FOOTER_DATA_NOTE} · ` +
     `${tzLabel} · ${FOOTER_WORK_WINDOW}`
   );
 }

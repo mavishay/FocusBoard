@@ -1,7 +1,8 @@
 /**
- * Shared noise-filter rules ported from the FocusBoard bot refresh routine.
- * Authoritative source: legacy HTML at `/Users/mavishay/FocusBoard/index.html`
- * + Personal ops assistant filter lists.
+ * Shared noise-filter rules from Personal ops assistant handoff pack:
+ * - `docs/migration/handoff/focusboard-handoff/skills/email-triage.md`
+ * - `docs/migration/handoff/focusboard-handoff/skills/slack-triage.md`
+ * - Live HTML: `docs/migration/handoff/focusboard-handoff/FocusBoard.index.html`
  */
 
 export interface EmailNoiseCandidate {
@@ -17,7 +18,7 @@ export interface SlackNoiseCandidate {
   text: string;
   username?: string | null;
   channelName?: string | null;
-  /** Slack channel ID — e.g. project-vgm-engineering exception. */
+  /** Slack channel ID — project-vgm-engineering exception per slack-triage.md */
   channelId?: string | null;
   botId?: string | null;
   subtype?: string | null;
@@ -35,11 +36,23 @@ export interface CalendarDisplayCandidate {
   attendeeResponseStatus?: string | null;
 }
 
-/** project-vgm-engineering — PR review asks kept even when unrelated elsewhere. */
+/** project-vgm-engineering — PR review asks kept (slack-triage.md). */
 export const DESIGNATED_ENG_CHANNEL_ID = "C0BASNN6YU9";
 
 /** Default Slack open-actions cutoff after 2026-09-16 ~17:04 Bangkok clear-all. */
 export const DEFAULT_SLACK_CUTOFF_ISO = "2026-09-16T10:04:00.000Z";
+
+/** Standing email noise senders/domains (email-triage.md § Noise). */
+export const EMAIL_NOISE_STANDING_SENDERS = [
+  "notifications@github.com",
+  "gemini-notes@google.com",
+  "alerts@email.neon.tech",
+  "@flagsmith.com",
+  "@jetserver.co.il",
+  "jetclients",
+  "cursor[bot]",
+  "vercel[bot]",
+] as const;
 
 const EMAIL_NOISE_DOMAIN_PATTERNS: RegExp[] = [
   /@flagsmith\.com/i,
@@ -48,6 +61,7 @@ const EMAIL_NOISE_DOMAIN_PATTERNS: RegExp[] = [
   /alerts@email\.neon\.tech/i,
   /notifications@github\.com/i,
   /noreply@github\.com/i,
+  /gemini-notes@google\.com/i,
 ];
 
 const EMAIL_NOISE_SENDER_PATTERNS: RegExp[] = [
@@ -60,6 +74,13 @@ const EMAIL_NOISE_SENDER_PATTERNS: RegExp[] = [
   /vercel\[bot\]/i,
   /linear.*digest/i,
   /digest.*linear/i,
+];
+
+const EMAIL_NOISE_BODY_PATTERNS: RegExp[] = [
+  /spending threshold/i,
+  /monthly limit/i,
+  /usage.*overage/i,
+  /overage alert/i,
 ];
 
 const EMAIL_PROMOTION_PATTERNS: RegExp[] = [
@@ -86,7 +107,7 @@ const EMAIL_RSVP_ACCEPT_PATTERNS: RegExp[] = [
   /אישור\s+השתתפות/,
 ];
 
-/** IB login alerts — urgent, never noise. */
+/** IB login alerts — urgent, never noise (live HTML footnote lists as filtered display-only). */
 const EMAIL_URGENT_PATTERNS: RegExp[] = [
   /\bib\s+login\b/i,
   /\binteractive\s+brokers\b.*\blogin\b/i,
@@ -94,7 +115,7 @@ const EMAIL_URGENT_PATTERNS: RegExp[] = [
   /\bsecurity\s+alert\b.*\bib\b/i,
 ];
 
-/** Meeting changes on events the user organized — keep unread + notify. */
+/** Organizer cancel/decline/reschedule — keep unread (email-triage.md). */
 const ORGANIZED_MEETING_CHANGE_PATTERNS: RegExp[] = [
   /\bcancel(?:led|lation)\b/i,
   /\bdeclin(?:ed|e)\b/i,
@@ -154,7 +175,7 @@ export function isPromotionOrBlastEmail(email: EmailNoiseCandidate): boolean {
 }
 
 /**
- * IB login and similar security alerts — always urgent, never filtered as noise.
+ * IB login and similar security alerts — never filtered as noise for triage.
  */
 export function isEmailUrgentHeuristic(email: EmailNoiseCandidate): boolean {
   const text = haystack([
@@ -167,7 +188,7 @@ export function isEmailUrgentHeuristic(email: EmailNoiseCandidate): boolean {
 }
 
 /**
- * Returns true when an unread email should be treated as bot noise
+ * Returns true when an unread email should be treated as noise
  * (auto-read / excluded from daily-status counts and lists).
  */
 export function isEmailNoise(email: EmailNoiseCandidate): boolean {
@@ -196,6 +217,10 @@ export function isEmailNoise(email: EmailNoiseCandidate): boolean {
   }
 
   if (EMAIL_NOISE_SENDER_PATTERNS.some((pattern) => pattern.test(combined))) {
+    return true;
+  }
+
+  if (EMAIL_NOISE_BODY_PATTERNS.some((pattern) => pattern.test(combined))) {
     return true;
   }
 
@@ -238,6 +263,7 @@ function isDesignatedEngChannel(
   return channelNames.some((name) => channel.includes(name.toLowerCase()));
 }
 
+/** PR review asks unrelated to user's work — noise unless designated eng channel. */
 export function isUnrelatedPrReviewAsk(
   candidate: SlackNoiseCandidate,
   options: SlackNoiseOptions = {},
@@ -255,6 +281,7 @@ export function isUnrelatedPrReviewAsk(
   return isPrAsk;
 }
 
+/** Shavit PR-bot PASS/approved/merge-ready/review asks (handoff meta + HTML footnote). */
 export function isShavitPrBotNoise(candidate: SlackNoiseCandidate): boolean {
   const sender = haystack([candidate.username, candidate.text]);
   if (!sender.includes("shavit")) {
@@ -270,6 +297,7 @@ export function isShavitPrBotNoise(candidate: SlackNoiseCandidate): boolean {
   return looksLikePrBot;
 }
 
+/** Linear bot DMs — noise in practice (HTML footnote). */
 export function isLinearBotDm(candidate: SlackNoiseCandidate): boolean {
   if (!candidate.isDirectMessage) {
     return false;

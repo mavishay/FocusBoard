@@ -3,10 +3,17 @@ import {
   buildEmailFootnoteFromCounts,
   buildSlackFootnoteFromCounts,
   EMAIL_NOISE_FOOTNOTE_SUFFIX,
+  FOCUSBOARD_HTML_REFRESH_ROUTINE_NAME,
   SLACK_EXCLUSIONS_FOOTNOTE,
 } from "@/lib/daily-status-copy";
 
 describe("daily-status-copy", () => {
+  it("names the legacy HTML refresh routine from handoff pack", () => {
+    expect(FOCUSBOARD_HTML_REFRESH_ROUTINE_NAME).toBe(
+      "FocusBoard HTML refresh routine",
+    );
+  });
+
   it("locks email footnote suffix from live HTML", () => {
     expect(EMAIL_NOISE_FOOTNOTE_SUFFIX).toContain("GitHub/Gemini/Flagsmith");
     expect(EMAIL_NOISE_FOOTNOTE_SUFFIX).toContain("GitLab !13 skipped");
