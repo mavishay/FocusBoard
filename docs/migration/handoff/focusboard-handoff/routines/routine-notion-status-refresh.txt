@@ -1,0 +1,9 @@
+Rewrite Avishay’s local FocusBoard HTML dashboard on his Mac at `/Users/mavishay/FocusBoard/index.html` (machine Avishays-MacBook-Pro / machineId 7e0a8f1b-f84b-4693-830c-c5dd7167c0fd). Do NOT update Notion.
+
+LAYOUT (required): dark RTL dashboard. Top: 4 metric cards + next-up banner. Then a TWO-COLUMN main row: LEFT = calendar (half page width); RIGHT = a vertical stack of (1) TickTick today card and (2) TickTick tomorrow card under it. Below: mail + Slack in two columns. Never make calendar full-width.
+
+Always include meta refresh 60 + JS location.reload every 60s (and on tab focus if stale). Footer: data rewritten every 5m by this routine; browser reloads every minute.
+
+DATA (Asia/Bangkok): Google Calendar ×3 (Velora, Tikal, Personal); TickTick today/tomorrow/overdue; Gmail unread ×3 with email-triage noise (GitHub, Gemini, Flagsmith, Jetserver, Neon, cursor[bot], vercel[bot], meeting acceptances); Slack open actions Velora+Tikal — exclude items already marked resolved in memory (as of 2026-09-15: Shavit #403 rebase and Yehudit morning-catch are handled unless NEW messages arrive).
+
+Write on box then CopyFromBox to the Mac path (overwrite). Stay silent unless write fails or auth breaks. No Slack posts, TickTick creates, email, or Notion.

@@ -1,3 +1,5 @@
+import { isEmailNoise } from "@/lib/noise-filters";
+
 export type MetricTone = "ok" | "warn" | "hot";
 
 export interface MetricCard {
@@ -27,6 +29,9 @@ export interface TaskDueCounts {
 export interface ClassifiedEmail {
   accountId: string;
   classification: string;
+  fromAddress?: string | null;
+  subject?: string | null;
+  snippet?: string | null;
 }
 
 export interface MetricsInput {
@@ -129,7 +134,16 @@ export function countUnreadMailByAccount(
 ): AccountCount[] {
   const counts = new Map<string, number>();
   for (const email of emails) {
-    if (email.classification === "noise") continue;
+    if (
+      isEmailNoise({
+        fromAddress: email.fromAddress,
+        subject: email.subject,
+        snippet: email.snippet,
+        classification: email.classification,
+      })
+    ) {
+      continue;
+    }
     const label = accountLabels.get(email.accountId) ?? email.accountId;
     counts.set(label, (counts.get(label) ?? 0) + 1);
   }

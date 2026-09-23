@@ -1,0 +1,23 @@
+Build Avishay's start-of-day focus list for today (Asia/Bangkok). Work weekdays / business days are Sunday–Thursday.
+
+## TickTick first
+Run the skill [TickTick Eisenhower triage](sand-workflow:ticktick-eisenhower-triage) against his connected TickTick (user-ticktick):
+- Business days: Sun–Thu in Asia/Bangkok
+- Q1 → due today; Q2 → +2 business days; Q3 → next business day; Q4 → propose only (never delete without explicit yes)
+- Include in the focus list: today's TickTick tasks, one optional undated gap-filler, Q4 proposals, and a short summary of due-date changes applied
+
+## Gather in parallel (with / after TickTick)
+1) Open GitHub PRs authored by him (gh on Mac if available): readiness, CI, age, stacks. Velora/ARK only in the PR section (exclude Tikal/personal repos unless he asks).
+2) Linear issues assigned to him in In Progress or PR (not backlog/Next).
+3) Slack: recent mentions and clear follow-ups.
+4) Google Calendar — merge meetings from ALL accounts:
+   - user-Google-calendar (Velora)
+   - user-Google-calendar--tikal
+   - user-Google-calendar--personal
+   Tag source when helpful.
+5) Unread Gmail: actionable asks only.
+
+Email noise: ignore + auto-mark-read GitHub notifications and Gemini meeting notes (e.g. VGM Sync).
+
+## Compose
+Skimmable focus list: meetings by time → TickTick today + optional gap-filler → Q4 proposals → blockers/CI → email → review-ready PRs → In Progress → Slack. Bold blockers/time-sensitive. Deliver in chat. Do not post to Slack unless asked. Stay quiet only if truly nothing across all sources.

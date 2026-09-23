@@ -16,14 +16,44 @@ describe("slack filters", () => {
   it("excludes bot messages and configured senders", () => {
     expect(
       isExcludedSender(
-        { text: "hello", username: "shavit-pr-bot", botId: null },
+        { text: "PR #153 PASS merge ready", username: "shavit-pr-bot", botId: null },
         ["shavit"],
       ),
     ).toBe(true);
 
     expect(
       isExcludedSender(
+        { text: "Can we sync on the roadmap?", username: "shavit", botId: null },
+        ["shavit"],
+      ),
+    ).toBe(false);
+
+    expect(
+      isExcludedSender(
         { text: "mention", username: "alice", botId: "B123" },
+        [],
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps PR review asks in project-vgm-engineering channel", () => {
+    expect(
+      isExcludedSender(
+        {
+          text: "Please review my PR",
+          username: "bob",
+          channelId: "C0BASNN6YU9",
+        },
+        [],
+      ),
+    ).toBe(false);
+    expect(
+      isExcludedSender(
+        {
+          text: "Please review my PR",
+          username: "bob",
+          channelName: "random",
+        },
         [],
       ),
     ).toBe(true);

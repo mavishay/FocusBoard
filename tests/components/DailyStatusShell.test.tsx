@@ -88,6 +88,7 @@ describe("DailyStatusShell", () => {
     expect(screen.getByTestId("tasks-sections")).toBeInTheDocument();
     expect(screen.getByTestId("emails-section")).toBeInTheDocument();
     expect(screen.getByTestId("slack-section")).toBeInTheDocument();
+    expect(screen.getByTestId("daily-status-footer")).toBeInTheDocument();
     expect(
       await screen.findByText("אין פעולות פתוחות"),
     ).toBeInTheDocument();

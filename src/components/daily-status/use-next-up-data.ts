@@ -7,6 +7,7 @@ import {
 } from "./calendar-meetings";
 import { formatNextUpSummary } from "./format-next-up-summary";
 import { useSlackOpenActions } from "./SlackOpenActionsContext";
+import { useDailyStatusRefresh } from "./DailyStatusRefreshContext";
 import { PLACEHOLDER_METRICS, PLACEHOLDER_NEXT_UP } from "./placeholder-data";
 import { getDailyStatusTimezone, getTodayDateKey } from "./timezone";
 
@@ -112,6 +113,7 @@ export function useNextUpData({
   slackOpenCount: slackOpenCountProp,
   remainingMeetings: remainingMeetingsProp,
 }: NextUpBannerProps = {}): string {
+  const { refreshGeneration } = useDailyStatusRefresh();
   const { totalOpen: slackFromContext } = useSlackOpenActions();
   const [now, setNow] = useState(() => new Date());
   const [sourceData, setSourceData] = useState<NextUpSourceData>(
@@ -173,7 +175,7 @@ export function useNextUpData({
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [refresh, refreshGeneration]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -182,18 +184,6 @@ export function useNextUpData({
 
     return () => window.clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (!hasElectronAPI()) {
-      return;
-    }
-
-    const unsubscribe = window.electronAPI.cron.onStatusUpdate(() => {
-      void refresh();
-    });
-
-    return unsubscribe;
-  }, [refresh]);
 
   return useMemo(() => {
     if (useStaticPlaceholder) {

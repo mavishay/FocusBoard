@@ -1,0 +1,1 @@
+Run [email-triage](sand-workflow:email-triage) in mode `action-digest` across all connected Gmail accounts (Velora/default, tikal, personal). Deliver the action-items digest in chat. Still alert immediately if anything urgent appears. Auto-mark marketing/lists/bulk and known notification noise as read. Stay silent when there are no action items and no urgent mail.

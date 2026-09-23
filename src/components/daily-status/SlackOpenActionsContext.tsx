@@ -8,9 +8,10 @@ import {
   type ReactNode,
 } from "react";
 import {
-  formatSlackCutoffHint,
+  formatSlackMetricsCutoffHint,
   formatSlackWorkspaceFooter,
 } from "./format-slack-when";
+import { useDailyStatusRefresh } from "./DailyStatusRefreshContext";
 
 export interface SlackOpenActionRow {
   workspace: string;
@@ -48,6 +49,7 @@ function hasSlackApi(): boolean {
 }
 
 export function SlackOpenActionsProvider({ children }: { children: ReactNode }) {
+  const { refreshGeneration } = useDailyStatusRefresh();
   const [actions, setActions] = useState<SlackOpenActionRow[]>([]);
   const [totalOpen, setTotalOpen] = useState(0);
   const [byWorkspace, setByWorkspace] = useState<
@@ -81,7 +83,7 @@ export function SlackOpenActionsProvider({ children }: { children: ReactNode }) 
       );
       setMetricsHintSuffix(
         result.connected
-          ? formatSlackCutoffHint(result.cutoffIso)
+          ? formatSlackMetricsCutoffHint(result.cutoffIso)
           : "ממתין לחיבור Slack",
       );
     } catch (error) {
@@ -99,19 +101,7 @@ export function SlackOpenActionsProvider({ children }: { children: ReactNode }) 
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    if (!hasSlackApi()) {
-      return;
-    }
-
-    const unsubscribe = window.electronAPI.cron.onStatusUpdate(() => {
-      void refresh();
-    });
-
-    return unsubscribe;
-  }, [refresh]);
+  }, [refresh, refreshGeneration]);
 
   const value = useMemo(
     () => ({

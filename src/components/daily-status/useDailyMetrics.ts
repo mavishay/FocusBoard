@@ -9,6 +9,7 @@ import {
   type MetricCard,
 } from "./metrics";
 import { useSlackOpenActions } from "./SlackOpenActionsContext";
+import { useDailyStatusRefresh } from "./DailyStatusRefreshContext";
 
 interface NormalizedTask {
   dueAt: string | null;
@@ -35,6 +36,7 @@ function normalizeTickTickTasks(
 
 export function useDailyMetrics(): MetricCard[] {
   const [metrics, setMetrics] = useState<MetricCard[]>(EMPTY_METRICS);
+  const { refreshGeneration } = useDailyStatusRefresh();
   const { totalOpen, byWorkspace, metricsHintSuffix } = useSlackOpenActions();
 
   const refresh = useCallback(async () => {
@@ -111,13 +113,7 @@ export function useDailyMetrics(): MetricCard[] {
 
   useEffect(() => {
     refresh();
-    const cleanup = window.electronAPI?.cron?.onStatusUpdate?.(() => {
-      refresh();
-    });
-    return () => {
-      if (typeof cleanup === "function") cleanup();
-    };
-  }, [refresh]);
+  }, [refresh, refreshGeneration]);
 
   return metrics;
 }
