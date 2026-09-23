@@ -16,5 +16,5 @@
     "sourceMap": true,
     "types": ["node", "vite/client"]
   },
-  "include": ["electron/**/*.ts", "electron/**/*.d.ts"]
+  "include": ["electron/**/*.ts", "electron/**/*.d.ts", "src/lib/noise-filters.ts"]
 }

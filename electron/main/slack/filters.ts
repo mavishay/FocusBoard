@@ -1,8 +1,14 @@
+import {
+  isSlackNoise as isSharedSlackNoise,
+  type SlackNoiseCandidate,
+} from '../../../src/lib/noise-filters';
+
 export interface SlackMessageCandidate {
   text: string;
   username?: string | null;
   botId?: string | null;
   subtype?: string | null;
+  channelName?: string | null;
 }
 
 const DEFAULT_EXCLUDED_SENDERS = [
@@ -27,11 +33,15 @@ export function isExcludedSender(
   candidate: SlackMessageCandidate,
   excludedSenders: string[],
 ): boolean {
-  if (candidate.botId) return true;
-  if (candidate.subtype === 'bot_message') return true;
+  const sharedCandidate: SlackNoiseCandidate = {
+    text: candidate.text,
+    username: candidate.username,
+    botId: candidate.botId,
+    subtype: candidate.subtype,
+    channelName: candidate.channelName,
+  };
 
-  const haystack = `${candidate.username ?? ''} ${candidate.text}`.toLowerCase();
-  return excludedSenders.some((needle) => haystack.includes(needle.toLowerCase()));
+  return isSharedSlackNoise(sharedCandidate, { excludedSenders });
 }
 
 export function isAfterCutoff(ts: string, cutoffIso: string | null): boolean {

@@ -16,10 +16,17 @@ describe("slack filters", () => {
   it("excludes bot messages and configured senders", () => {
     expect(
       isExcludedSender(
-        { text: "hello", username: "shavit-pr-bot", botId: null },
+        { text: "PR #153 PASS merge ready", username: "shavit-pr-bot", botId: null },
         ["shavit"],
       ),
     ).toBe(true);
+
+    expect(
+      isExcludedSender(
+        { text: "Can we sync on the roadmap?", username: "shavit", botId: null },
+        ["shavit"],
+      ),
+    ).toBe(false);
 
     expect(
       isExcludedSender(

@@ -1,16 +1,20 @@
+import {
+  formatDailyStatusFooter,
+  useDailyStatusRefresh,
+} from "./DailyStatusRefreshContext";
+import { getDailyStatusTimezone } from "./timezone";
+
 export function DailyStatusFooter() {
-  const now = new Date();
-  const time = now.toLocaleTimeString("he-IL", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone.replace("_", " ");
+  const { lastRefreshedAt, refreshing } = useDailyStatusRefresh();
+  const footer = formatDailyStatusFooter(
+    lastRefreshedAt,
+    getDailyStatusTimezone(),
+  );
 
   return (
-    <footer className="ds-footer">
-      FocusBoard · נתונים נכתבו מחדש {time} {timezone} · מתעדכנים כל 5 דק׳ ע״י FocusBoard
-      refresh routine · Sun–Thu 09:00–17:30
+    <footer className="ds-footer" data-testid="daily-status-footer">
+      {footer}
+      {refreshing ? " · מרענן..." : ""}
     </footer>
   );
 }

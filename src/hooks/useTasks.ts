@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { TaskItem } from '@/lib/task-utils';
+import { useDailyStatusRefresh } from '@/components/daily-status/DailyStatusRefreshContext';
 
 interface SyncStatus {
   status: 'idle' | 'syncing' | 'error';
@@ -23,6 +24,7 @@ interface ListItem {
 }
 
 export function useTasks() {
+  const { refreshGeneration } = useDailyStatusRefresh();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -111,7 +113,7 @@ export function useTasks() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData, refreshGeneration]);
 
   const loadAvailableLists = useCallback(async () => {
     try {
