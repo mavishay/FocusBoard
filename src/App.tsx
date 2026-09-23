@@ -8,6 +8,7 @@ import { Onboarding } from '@/components/Onboarding';
 import { Dashboard } from '@/components/Dashboard';
 import { Settings } from '@/components/Settings';
 import { Notes } from '@/components/Notes';
+import { Conversations } from '@/components/Conversations';
 
 function LoadingScreen() {
   return (
@@ -56,6 +57,7 @@ export function App() {
               >
                 <Route index element={<Dashboard />} />
                 <Route path="notes" element={<Notes />} />
+                <Route path="conversations" element={<Conversations />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

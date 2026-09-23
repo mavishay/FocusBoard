@@ -185,6 +185,36 @@ declare global {
     updatedAt: string;
   }
 
+  interface ChatActionRecord {
+    type: string;
+    params?: Record<string, unknown>;
+    result?: unknown;
+    error?: string;
+  }
+
+  interface ChatConversation {
+    id: string;
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  interface ChatMessage {
+    id: string;
+    conversationId: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    actions: ChatActionRecord[];
+    createdAt: string;
+  }
+
+  interface ChatSendMessageResult {
+    userMessage?: ChatMessage;
+    assistantMessage: ChatMessage;
+    conversation?: ChatConversation;
+    error?: 'consent_required' | 'api_key_required' | 'processing_error';
+  }
+
   interface ElectronAPI {
     window: {
       minimize: () => Promise<void>;
@@ -360,6 +390,13 @@ declare global {
       updateSuggestion: (data: { sessionId: string; suggestionId: string; accepted: boolean }) => Promise<TaskPlannerSuggestion>;
       acceptAll: (sessionId: string) => Promise<TaskPlannerSession>;
       applySuggestions: (sessionId: string) => Promise<{ applied: number; failed: string[] }>;
+    };
+    chat: {
+      listConversations: () => Promise<ChatConversation[]>;
+      createConversation: (data?: { title?: string }) => Promise<ChatConversation>;
+      deleteConversation: (data: { conversationId: string }) => Promise<{ success: boolean }>;
+      getMessages: (data: { conversationId: string }) => Promise<ChatMessage[]>;
+      sendMessage: (data: { conversationId: string; content: string }) => Promise<ChatSendMessageResult>;
     };
     calendar: {
       sync: (accountId: string) => Promise<{ accountId: string; status: string; lastSyncAt: string | null; error?: string; fetched: number }>;
