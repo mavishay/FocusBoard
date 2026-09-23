@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { CLASSIFICATION_GET_EMAILS_MAX_LIMIT } from "@/lib/classification-constants";
 import {
   countRemainingMeetingsToday,
   findCurrentOrNextMeeting,
@@ -134,7 +135,9 @@ export function useNextUpData({
       const [events, accounts, emails] = await Promise.all([
         window.electronAPI.calendar.getFilteredEvents(today, today),
         window.electronAPI.gmail.listAccounts(),
-        window.electronAPI.classification.getEmails({ limit: 500 }),
+        window.electronAPI.classification.getEmails({
+          limit: CLASSIFICATION_GET_EMAILS_MAX_LIMIT,
+        }),
       ]);
 
       const accountsById = new Map(

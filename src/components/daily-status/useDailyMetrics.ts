@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { CLASSIFICATION_GET_EMAILS_MAX_LIMIT } from "@/lib/classification-constants";
 import {
   buildMetricsCards,
   countTaskDueBuckets,
@@ -53,7 +54,7 @@ export function useDailyMetrics(): MetricCard[] {
         api.calendar.getTodaySummary(),
         api.googleTasks.listTasks(),
         api.ticktick.listTasks(),
-        api.classification.getEmails({ limit: 500 }),
+        api.classification.getEmails({ limit: CLASSIFICATION_GET_EMAILS_MAX_LIMIT }),
         api.gmail.listAccounts(),
       ]);
 
