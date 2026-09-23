@@ -3,8 +3,12 @@
 <!-- TEAM_AI_DIRECTIVES START -->
 ## Team AI Directives
 
+**Repository**: [mavishay/FocusBoard](https://github.com/mavishay/FocusBoard) — Electron desktop app (React + SQLite) for unified email, tasks, calendar, and AI-powered triage.
+
 **Team directives path**: `/Users/mavishay/Projects/MaorInnovations/team-ai-directives`
 **Team Constitution**: `/Users/mavishay/Projects/MaorInnovations/team-ai-directives/context_modules/constitution.md`
+
+**Product docs in-repo**: `.adlc/product/` (PRD sections, requirements REQ-NNN, PDRs in `.adlc/memory/pdr/`)
 
 ### GitHub Account Verification
 
@@ -44,14 +48,18 @@ Every issue body MUST contain these sections in order:
 
 Always include `file:line` references from the actual codebase. Explore the codebase first to find:
 - Existing implementations to build on
-- Patterns to follow (IPC handlers, preload APIs, component structure)
-- Database tables and migration numbering (currently at schema version 11)
+- Patterns to follow (IPC handlers in `electron/main/ipc/`, preload APIs, React components in `src/`)
+- Database tables and migration numbering (currently at schema version 24 in `electron/main/db/index.ts`)
 
 #### Labeling Convention
 
 - **`enhancement`** — all feature issues
 - **`blocked-by: #N`** — each dependency gets its own label
-- **`wave: N-name`** — execution wave: `1-foundation`, `2-parallel`, `3-dependent`, `4-improvements`, `5-notifications`, `5-infrastructure`, `6-polish`
+- **`wave: N-name`** — execution wave for FocusBoard:
+  - `1-foundation` — docs, daily-status shell, core layout
+  - `2-parallel` — metrics, banners, task cards (can run in parallel after foundation)
+  - `3-dependent` — Slack card, bot routine port (depends on UI shell)
+  - `4-improvements` — quotes, notes, AI chat, task planner, and other enhancements
 
 #### GitHub Relationships
 
@@ -63,19 +71,21 @@ gh api graphql -f query="mutation { addBlockedBy(input: {issueId: \"<subject_nod
 
 To get node IDs:
 ```bash
-gh api graphql -f query='{ repository(owner: "mavishay", name: "mydashboard") { issues(first: 50) { nodes { number id } } } }'
+gh api graphql -f query='{ repository(owner: "mavishay", name: "FocusBoard") { issues(first: 50) { nodes { number id } } } }'
 ```
 
 #### Project Board
 
 Add every issue to the project board:
 ```bash
-gh project item-add 1 --owner mavishay --url "https://github.com/mavishay/mydashboard/issues/<number>"
+gh project item-add 1 --owner mavishay --url "https://github.com/mavishay/FocusBoard/issues/<number>"
 ```
+
+Project: https://github.com/users/mavishay/projects/1 (FocusBoard)
 
 ### PR Best Practices
 
-**ALWAYS connect PRs to their corresponding issues.** When creating a PR, include the issue number in the title or body (e.g., `#28` in title or `Closes #28` in body) so GitHub links them automatically.
+**ALWAYS connect PRs to their corresponding issues.** When creating a PR, include the issue number in the title or body (e.g., `#68` in title or `Closes #68` in body) so GitHub links them automatically.
 
 **ALWAYS fix merge conflicts immediately after creating a PR.** If the PR branch has conflicts with the base branch, resolve them before proceeding to any other work. Never leave a PR with unresolved conflicts.
 
@@ -88,47 +98,36 @@ After running tests, always run `pnpm test:cleanup` to kill any stale vitest wor
 1. `gh api user --jq '.login'` → verify `mavishay`
 2. Explore codebase for `file:line` references
 3. Write body to `/tmp/issue-<name>.md` (avoid shell escaping issues)
-4. `gh issue create --repo mavishay/mydashboard --title "..." --label "enhancement" --body-file /tmp/issue-<name>.md`
-5. `gh project item-add 1 --owner mavishay --url ...`
-6. `gh issue edit <N> --repo mavishay/mydashboard --add-label "blocked-by: #X,wave: N-name"`
+4. `gh issue create --repo mavishay/FocusBoard --title "..." --label "enhancement" --body-file /tmp/issue-<name>.md`
+5. `gh project item-add 1 --owner mavishay --url "https://github.com/mavishay/FocusBoard/issues/<number>"`
+6. `gh issue edit <N> --repo mavishay/FocusBoard --add-label "blocked-by: #X,wave: N-name"`
 7. Add GraphQL blocked-by relationships
 8. Clean up temp files
 
 ### Issue Numbering
 
-Issues are numbered sequentially. Current max: #57. Next issue should be #58.
+Issues are numbered sequentially. Current max: #73. Next issue should be #74.
 
 ### Existing Issues Reference
 
 | # | Title | Status | Wave |
 |---|-------|--------|------|
-| 5 | Native notification system | OPEN | 3-dependent |
-| 12 | Setup optimization (under 15 min) | OPEN | 3-dependent |
-| 13 | Onboarding consent flow | OPEN | 3-dependent |
-| 27 | Automated email fetch & classify cron job | OPEN | 4-improvements |
-| 28 | Unread-only fetch + delete read after 3 days | OPEN | 4-improvements |
-| 29 | Calendar view above tasks | OPEN | 4-improvements |
-| 30 | System notifications 3x/day | OPEN | 5-notifications |
-| 31 | Allow tasks edit/add/delete | OPEN | 4-improvements |
-| 32 | Account tags/labels with color settings | OPEN | 4-improvements |
-| 33 | Mark email as read (syncs to inbox) | OPEN | 4-improvements |
-| 34 | Email ordering and grouping options | OPEN | 4-improvements |
-| 35 | UI/UX improvements | OPEN | 6-polish |
-| 36 | Replace n8n sidecar with in-app cron | OPEN | 5-infrastructure |
-| 37 | Email preview modal with browser link | OPEN | 4-improvements |
-| 38 | Custom classification rules for AI agent | OPEN | 4-improvements |
-| 51 | UI Foundation: Routing, Sidebar, Tailwind & shadcn | OPEN | 4-improvements |
-| 52 | Workload Traffic Light Dashboard Widget | OPEN | 4-improvements |
 | 53 | Daily Quote at Top of Home Page | OPEN | 4-improvements |
 | 54 | Notes Feature with DB Storage and Agent Integration | OPEN | 4-improvements |
 | 55 | AI Chat Assistant for Data Queries and Actions | OPEN | 4-improvements |
-| 56 | BUG: Email list not auto-refreshing after fetch | OPEN | 4-improvements |
 | 57 | Task Planner Wizard with AI Deadline Suggestions | OPEN | 4-improvements |
+| 67 | Docs: Fix AGENTS.md for FocusBoard (remove mydashboard leftovers) | OPEN | 1-foundation |
+| 68 | UI: Daily Status shell matching local HTML mock (RTL Hebrew) | OPEN | 1-foundation |
+| 69 | UI: Metrics strip (meetings, tasks, mail, Slack) | OPEN | 2-parallel |
+| 70 | UI: Next-up banner for daily status | OPEN | 2-parallel |
+| 71 | UI: Split tasks into today + tomorrow cards | OPEN | 2-parallel |
+| 72 | Feature: Slack open-actions card on daily status | OPEN | 3-dependent |
+| 73 | Feature: Port FocusBoard bot routines/skills into Electron app | OPEN | 3-dependent |
 
 ### Wave Execution Order
 
-1. **Wave 3-dependent** (#5, #12, #13) — finish existing open items
-2. **Wave 4-improvements** (#27, #28, #29, #31, #32, #33, #34, #37, #38, #51, #52, #53, #54, #55, #56, #57) — new features, parallelizable
-3. **Wave 5** (#30 notifications, #36 infra) — depends on wave 4
-4. **Wave 6-polish** (#35) — UI polish, last
+1. **Wave 1-foundation** (#67, #68) — agent docs and daily-status UI shell
+2. **Wave 2-parallel** (#69, #70, #71) — metrics, banner, task cards (parallel after #68)
+3. **Wave 3-dependent** (#72, #73) — Slack card and bot routine port (depends on daily-status shell)
+4. **Wave 4-improvements** (#53, #54, #55, #57) — quotes, notes, AI chat, task planner
 <!-- TEAM_AI_DIRECTIVES END -->
