@@ -69,4 +69,15 @@ describe("DailyQuote", () => {
 
     expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
+
+  it("renders quote text with LTR direction", async () => {
+    render(<DailyQuote />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("daily-quote")).toBeInTheDocument();
+    });
+
+    const quoteText = screen.getByText(/Focus on what matters/).closest("blockquote");
+    expect(quoteText).toHaveAttribute("dir", "ltr");
+  });
 });

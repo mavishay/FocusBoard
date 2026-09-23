@@ -48,7 +48,7 @@ function formatWhenLabel(
 ): string {
   const start = formatTimeInZone(startTime, timeZone);
   const end = formatTimeInZone(endTime, timeZone);
-  return `היום · ${start}–${end}`;
+  return `${start}–${end}`;
 }
 
 function statusForEvent(
@@ -66,7 +66,27 @@ function statusForEvent(
   if (nowMs >= startMs) {
     return { status: "עכשיו", statusVariant: "soon" };
   }
-  return { status: "היום", statusVariant: "soon" };
+  return { status: "בקרוב", statusVariant: "soon" };
+}
+
+function eventDedupKey(event: CalendarApiEvent): string {
+  return `${event.title}\0${event.startTime}\0${event.endTime}`;
+}
+
+function dedupeCalendarEvents(events: CalendarApiEvent[]): CalendarApiEvent[] {
+  const seen = new Set<string>();
+  const deduped: CalendarApiEvent[] = [];
+
+  for (const event of events) {
+    const key = eventDedupKey(event);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    deduped.push(event);
+  }
+
+  return deduped;
 }
 
 export function buildCalendarDisplayRows(
@@ -75,7 +95,7 @@ export function buildCalendarDisplayRows(
   now: Date = new Date(),
   timeZone: string = getDailyStatusTimezone(),
 ): CalendarDisplayRow[] {
-  return events
+  return dedupeCalendarEvents(events)
     .filter((event) => shouldDisplayCalendarEvent({ title: event.title }))
     .map((event) => {
       const { status, statusVariant } = statusForEvent(

@@ -71,7 +71,9 @@ export class QuoteService {
 
   async refresh(): Promise<DailyQuote> {
     const today = todayDateString();
-    return this.fetchAndCache(today);
+    const fetched = await this.fetchRandomFromApis();
+    const quote = fetched ?? this.buildDefaultQuote(today);
+    return this.saveQuote(quote);
   }
 
   private getCachedQuote(date: string): DailyQuote | null {
@@ -83,9 +85,12 @@ export class QuoteService {
   }
 
   private async fetchAndCache(date: string): Promise<DailyQuote> {
-    const fetched = await this.fetchFromApis(date);
+    const fetched = await this.fetchDailyFromApis(date);
     const quote = fetched ?? this.buildDefaultQuote(date);
+    return this.saveQuote(quote);
+  }
 
+  private saveQuote(quote: DailyQuote): DailyQuote {
     this.db
       .prepare(
         `INSERT INTO daily_quotes (date, content, author, source, tags, fetched_at)
@@ -105,7 +110,7 @@ export class QuoteService {
         JSON.stringify(quote.tags)
       );
 
-    const saved = this.getCachedQuote(date);
+    const saved = this.getCachedQuote(quote.date);
     return saved ?? quote;
   }
 
@@ -120,8 +125,8 @@ export class QuoteService {
     };
   }
 
-  private async fetchFromApis(date: string): Promise<DailyQuote | null> {
-    const zenQuote = await this.fetchZenQuotes();
+  private async fetchDailyFromApis(date: string): Promise<DailyQuote | null> {
+    const zenQuote = await this.fetchZenQuotes('today');
     if (zenQuote) {
       return { ...zenQuote, date };
     }
@@ -139,9 +144,26 @@ export class QuoteService {
     return null;
   }
 
-  private async fetchZenQuotes(): Promise<Omit<DailyQuote, 'date'> | null> {
+  private async fetchRandomFromApis(): Promise<DailyQuote | null> {
+    const today = todayDateString();
+    const zenQuote = await this.fetchZenQuotes('random');
+    if (zenQuote) {
+      return { ...zenQuote, date: today };
+    }
+
+    const quotableQuote = await this.fetchQuotable();
+    if (quotableQuote) {
+      return { ...quotableQuote, date: today };
+    }
+
+    return null;
+  }
+
+  private async fetchZenQuotes(
+    mode: 'today' | 'random',
+  ): Promise<Omit<DailyQuote, 'date'> | null> {
     try {
-      const response = await fetch('https://zenquotes.io/api/today', {
+      const response = await fetch(`https://zenquotes.io/api/${mode}`, {
         headers: { Accept: 'application/json' },
       });
       if (!response.ok) return null;
