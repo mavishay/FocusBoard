@@ -46,12 +46,23 @@ beforeEach(() => {
       calendar: {
         getTodayEvents: vi.fn().mockResolvedValue([]),
         getTodaySummary: vi.fn().mockResolvedValue({ totalToday: 0, byAccount: [] }),
+        getFilteredEvents: vi.fn().mockResolvedValue([]),
       },
       googleTasks: mockGoogleTasks,
       ticktick: mockTickTick,
       classification: { getEmails: vi.fn().mockResolvedValue([]) },
       gmail: mockGmail,
       cron: { onStatusUpdate: vi.fn(() => vi.fn()) },
+      slack: {
+        getOpenActions: vi.fn().mockResolvedValue({
+          actions: [],
+          totalOpen: 0,
+          byWorkspace: [],
+          cutoffIso: null,
+          scannedAt: new Date().toISOString(),
+          connected: false,
+        }),
+      },
     },
   });
 });
@@ -77,6 +88,8 @@ describe("DailyStatusShell", () => {
     expect(screen.getByTestId("tasks-sections")).toBeInTheDocument();
     expect(screen.getByTestId("emails-section")).toBeInTheDocument();
     expect(screen.getByTestId("slack-section")).toBeInTheDocument();
-    expect(screen.getByText("אין פעולות פתוחות")).toBeInTheDocument();
+    expect(
+      await screen.findByText("אין פעולות פתוחות"),
+    ).toBeInTheDocument();
   });
 });

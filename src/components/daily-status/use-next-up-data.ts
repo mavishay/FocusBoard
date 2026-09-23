@@ -6,6 +6,7 @@ import {
   type CalendarMeetingEvent,
 } from "./calendar-meetings";
 import { formatNextUpSummary } from "./format-next-up-summary";
+import { useSlackOpenActions } from "./SlackOpenActionsContext";
 import { PLACEHOLDER_METRICS, PLACEHOLDER_NEXT_UP } from "./placeholder-data";
 import { getDailyStatusTimezone, getTodayDateKey } from "./timezone";
 
@@ -111,6 +112,7 @@ export function useNextUpData({
   slackOpenCount: slackOpenCountProp,
   remainingMeetings: remainingMeetingsProp,
 }: NextUpBannerProps = {}): string {
+  const { totalOpen: slackFromContext } = useSlackOpenActions();
   const [now, setNow] = useState(() => new Date());
   const [sourceData, setSourceData] = useState<NextUpSourceData>(
     placeholderSourceData,
@@ -148,7 +150,7 @@ export function useNextUpData({
         buildSourceData(
           toCalendarMeetingEvents(events, accountsById),
           unreadCountProp ?? countUnreadEmails(emails),
-          slackOpenCountProp ?? 0,
+          slackOpenCountProp ?? slackFromContext,
           remainingMeetingsProp,
         ),
       );
@@ -157,12 +159,17 @@ export function useNextUpData({
         buildSourceData(
           [],
           unreadCountProp ?? PLACEHOLDER_UNREAD,
-          slackOpenCountProp ?? PLACEHOLDER_SLACK,
+          slackOpenCountProp ?? slackFromContext ?? PLACEHOLDER_SLACK,
           remainingMeetingsProp ?? PLACEHOLDER_REMAINING,
         ),
       );
     }
-  }, [remainingMeetingsProp, slackOpenCountProp, unreadCountProp]);
+  }, [
+    remainingMeetingsProp,
+    slackOpenCountProp,
+    slackFromContext,
+    unreadCountProp,
+  ]);
 
   useEffect(() => {
     void refresh();

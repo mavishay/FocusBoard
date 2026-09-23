@@ -6,11 +6,13 @@ import { DailyStatusHeader } from "./DailyStatusHeader";
 import { EmailsSection } from "./EmailsSection";
 import { MetricsStrip } from "./MetricsStrip";
 import { NextUpBanner } from "./NextUpBanner";
+import { SlackOpenActionsProvider } from "./SlackOpenActionsContext";
 import { SlackSection } from "./SlackSection";
 import { TasksSections } from "./TasksSections";
 
 export function DailyStatusShell() {
   return (
+    <SlackOpenActionsProvider>
     <div className="daily-status" dir="rtl" lang="he" data-testid="daily-status-shell">
       <div className="ds-wrap">
         <DailyStatusHeader />
@@ -28,5 +30,6 @@ export function DailyStatusShell() {
         <DailyStatusFooter />
       </div>
     </div>
+    </SlackOpenActionsProvider>
   );
 }

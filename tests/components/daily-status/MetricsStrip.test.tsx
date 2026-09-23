@@ -2,6 +2,7 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act, cleanup } from "@testing-library/react";
+import { SlackOpenActionsProvider } from "../../../src/components/daily-status/SlackOpenActionsContext";
 import { MetricsStrip } from "../../../src/components/daily-status/MetricsStrip";
 
 const mockCalendar = {
@@ -34,6 +35,10 @@ const mockCron = {
   }),
 };
 
+const mockSlack = {
+  getOpenActions: vi.fn(),
+};
+
 function setupDefaults() {
   mockCalendar.getTodayEvents.mockResolvedValue([
     { id: "1", accountId: "a1" },
@@ -60,6 +65,25 @@ function setupDefaults() {
     { id: "a1", email: "v@x.com", displayName: "Velora", color: null },
     { id: "a2", email: "t@x.com", displayName: "Tikal", color: null },
   ]);
+  mockSlack.getOpenActions.mockResolvedValue({
+    actions: [],
+    totalOpen: 2,
+    byWorkspace: [
+      { label: "Velora", count: 1 },
+      { label: "Tikal", count: 1 },
+    ],
+    cutoffIso: "2026-09-16T10:04:00.000Z",
+    scannedAt: new Date().toISOString(),
+    connected: true,
+  });
+}
+
+function renderMetricsStrip() {
+  return render(
+    <SlackOpenActionsProvider>
+      <MetricsStrip />
+    </SlackOpenActionsProvider>,
+  );
 }
 
 beforeEach(() => {
@@ -76,6 +100,7 @@ beforeEach(() => {
       classification: mockClassification,
       gmail: mockGmail,
       cron: mockCron,
+      slack: mockSlack,
     },
   });
 });
@@ -88,17 +113,18 @@ afterEach(() => {
 describe("MetricsStrip", () => {
   it("renders four live KPI cards from IPC data", async () => {
     await act(async () => {
-      render(<MetricsStrip />);
+      renderMetricsStrip();
     });
 
     expect(screen.getByTestId("metrics-strip")).toBeInTheDocument();
     expect(screen.getByTestId("metric-meetings")).toHaveClass("ds-warn");
     expect(screen.getByTestId("metric-tasks")).toHaveClass("ds-ok");
     expect(screen.getByTestId("metric-mail")).toHaveClass("ds-ok");
-    expect(screen.getByTestId("metric-slack")).toHaveClass("ds-ok");
+    expect(screen.getByTestId("metric-slack")).toHaveClass("ds-warn");
     expect(screen.getByTestId("metric-meetings")).toHaveTextContent("2");
     expect(screen.getByTestId("metric-tasks")).toHaveTextContent("1");
     expect(screen.getByTestId("metric-mail")).toHaveTextContent("1");
+    expect(screen.getByTestId("metric-slack")).toHaveTextContent("2");
     expect(screen.getByTestId("metric-meetings")).toHaveTextContent(
       /אירועים היום 4/
     );
@@ -110,7 +136,7 @@ describe("MetricsStrip", () => {
 
   it("refreshes metrics when cron status updates", async () => {
     await act(async () => {
-      render(<MetricsStrip />);
+      renderMetricsStrip();
     });
 
     mockCalendar.getTodayEvents.mockResolvedValue([
@@ -124,7 +150,7 @@ describe("MetricsStrip", () => {
       cronStatusCallback?.();
     });
 
-    expect(mockCalendar.getTodayEvents).toHaveBeenCalledTimes(2);
+    expect(mockCalendar.getTodayEvents).toHaveBeenCalledTimes(3);
     expect(screen.getByTestId("metric-meetings")).toHaveClass("ds-hot");
   });
 });

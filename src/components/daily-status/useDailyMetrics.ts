@@ -8,6 +8,7 @@ import {
   mergeAccountCounts,
   type MetricCard,
 } from "./metrics";
+import { useSlackOpenActions } from "./SlackOpenActionsContext";
 
 interface NormalizedTask {
   dueAt: string | null;
@@ -34,6 +35,7 @@ function normalizeTickTickTasks(
 
 export function useDailyMetrics(): MetricCard[] {
   const [metrics, setMetrics] = useState<MetricCard[]>(EMPTY_METRICS);
+  const { totalOpen, byWorkspace, metricsHintSuffix } = useSlackOpenActions();
 
   const refresh = useCallback(async () => {
     const api = window.electronAPI;
@@ -80,10 +82,13 @@ export function useDailyMetrics(): MetricCard[] {
         calendarSummary.byAccount
       );
 
-      const slackByAccount = accountList.map((account) => ({
-        label: account.label,
-        count: 0,
-      }));
+      const slackByAccount =
+        byWorkspace.length > 0
+          ? byWorkspace
+          : accountList.map((account) => ({
+              label: account.label,
+              count: 0,
+            }));
 
       setMetrics(
         buildMetricsCards({
@@ -94,15 +99,15 @@ export function useDailyMetrics(): MetricCard[] {
           },
           taskCounts,
           unreadByAccount,
-          slackOpen: 0,
+          slackOpen: totalOpen,
           slackByAccount,
-          slackHintSuffix: "ממתין לחיבור Slack",
+          slackHintSuffix: metricsHintSuffix,
         })
       );
     } catch (error) {
       console.error("[useDailyMetrics] Failed to refresh metrics:", error);
     }
-  }, []);
+  }, [byWorkspace, metricsHintSuffix, totalOpen]);
 
   useEffect(() => {
     refresh();

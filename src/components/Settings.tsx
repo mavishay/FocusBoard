@@ -25,6 +25,18 @@ interface GmailAccount {
   color?: string | null;
 }
 
+interface SlackWorkspace {
+  id: string;
+  teamId: string;
+  teamName: string;
+  displayName: string;
+}
+
+interface SlackSettings {
+  cutoffIso: string | null;
+  excludedSenders: string[];
+}
+
 const PRESET_COLORS = [
   "#1976d2", // Blue
   "#388e3c", // Green
@@ -107,6 +119,13 @@ export function Settings() {
     eligibleCount: number;
   } | null>(null);
   const [cleanupRunning, setCleanupRunning] = useState(false);
+  const [slackWorkspaces, setSlackWorkspaces] = useState<SlackWorkspace[]>([]);
+  const [slackSettings, setSlackSettings] = useState<SlackSettings | null>(null);
+  const [slackToken, setSlackToken] = useState("");
+  const [slackDisplayName, setSlackDisplayName] = useState("");
+  const [slackConnecting, setSlackConnecting] = useState(false);
+  const [slackSaving, setSlackSaving] = useState(false);
+  const [slackError, setSlackError] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
 
   const loadKeys = useCallback(async () => {
@@ -163,6 +182,24 @@ export function Settings() {
     }
   }, []);
 
+  const loadSlackWorkspaces = useCallback(async () => {
+    try {
+      const workspaces = await window.electronAPI.slack.listWorkspaces();
+      setSlackWorkspaces(workspaces);
+    } catch (err) {
+      console.error("Failed to load Slack workspaces:", err);
+    }
+  }, []);
+
+  const loadSlackSettings = useCallback(async () => {
+    try {
+      const settings = await window.electronAPI.slack.getSettings();
+      setSlackSettings(settings);
+    } catch (err) {
+      console.error("Failed to load Slack settings:", err);
+    }
+  }, []);
+
   useEffect(() => {
     loadKeys();
     loadGmailAccounts();
@@ -170,6 +207,8 @@ export function Settings() {
     loadAiConsentSettings();
     loadCronStatus();
     loadRetentionSettings();
+    loadSlackWorkspaces();
+    loadSlackSettings();
   }, [
     loadKeys,
     loadGmailAccounts,
@@ -177,6 +216,8 @@ export function Settings() {
     loadAiConsentSettings,
     loadCronStatus,
     loadRetentionSettings,
+    loadSlackWorkspaces,
+    loadSlackSettings,
   ]);
 
   const handleSave = async () => {
@@ -468,6 +509,151 @@ export function Settings() {
         >
           {connecting ? "Connecting..." : "Connect Gmail Account"}
         </button>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-lg mb-3">Slack Workspaces</h2>
+        <p className="text-muted-foreground text-sm mb-4">
+          Connect Slack workspaces for the daily-status open-actions card. Use a
+          read-only user token with scopes:{" "}
+          <code className="text-xs">channels:history</code>,{" "}
+          <code className="text-xs">groups:history</code>,{" "}
+          <code className="text-xs">im:history</code>,{" "}
+          <code className="text-xs">mpim:history</code>,{" "}
+          <code className="text-xs">search:read</code>,{" "}
+          <code className="text-xs">users:read</code>. Tokens are encrypted
+          locally and never logged.
+        </p>
+
+        {slackWorkspaces.length === 0 ? (
+          <p className="text-muted-foreground text-sm mb-4">
+            No Slack workspaces connected.
+          </p>
+        ) : (
+          <div className="mb-4">
+            {slackWorkspaces.map((workspace) => (
+              <div
+                key={workspace.id}
+                className="flex items-center justify-between p-3 border border-border rounded-lg mb-2"
+              >
+                <div>
+                  <div className="font-semibold text-sm">
+                    {workspace.displayName}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {workspace.teamName} ({workspace.teamId})
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      await window.electronAPI.slack.disconnect(workspace.id);
+                      await loadSlackWorkspaces();
+                    } catch (err) {
+                      console.error("Failed to disconnect Slack workspace:", err);
+                    }
+                  }}
+                  className="bg-transparent border border-destructive text-destructive rounded px-2 py-1 cursor-pointer text-xs"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 max-w-lg mb-4">
+          <input
+            type="text"
+            placeholder="Workspace label (e.g. Velora, Tikal)"
+            value={slackDisplayName}
+            onChange={(e) => setSlackDisplayName(e.target.value)}
+            className="p-2 rounded border border-border text-sm"
+          />
+          <input
+            type="password"
+            placeholder="Slack user token (xoxp-...)"
+            value={slackToken}
+            onChange={(e) => setSlackToken(e.target.value)}
+            className="p-2 rounded border border-border text-sm font-mono"
+          />
+          {slackError && (
+            <p className="text-destructive text-sm">{slackError}</p>
+          )}
+          <button
+            onClick={async () => {
+              setSlackError(null);
+              setSlackConnecting(true);
+              try {
+                await window.electronAPI.slack.connect({
+                  token: slackToken,
+                  displayName: slackDisplayName.trim(),
+                });
+                setSlackToken("");
+                setSlackDisplayName("");
+                await loadSlackWorkspaces();
+              } catch (err) {
+                setSlackError(
+                  err instanceof Error
+                    ? err.message
+                    : "Failed to connect Slack workspace",
+                );
+              } finally {
+                setSlackConnecting(false);
+              }
+            }}
+            disabled={
+              slackConnecting || !slackToken.trim() || !slackDisplayName.trim()
+            }
+            className={`px-5 py-2.5 rounded border-none text-sm font-semibold self-start ${
+              slackConnecting || !slackToken.trim() || !slackDisplayName.trim()
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-primary text-primary-foreground cursor-pointer"
+            }`}
+          >
+            {slackConnecting ? "Connecting..." : "Connect Slack Workspace"}
+          </button>
+        </div>
+
+        {slackSettings && (
+          <div className="flex flex-col gap-3 max-w-lg">
+            <label className="text-sm text-muted-foreground">
+              Cutoff (only scan mentions/DMs after this time; leave empty for
+              all)
+            </label>
+            <input
+              type="datetime-local"
+              value={
+                slackSettings.cutoffIso
+                  ? new Date(slackSettings.cutoffIso)
+                      .toISOString()
+                      .slice(0, 16)
+                  : ""
+              }
+              onChange={async (e) => {
+                setSlackSaving(true);
+                try {
+                  const cutoffIso = e.target.value
+                    ? new Date(e.target.value).toISOString()
+                    : null;
+                  const updated = await window.electronAPI.slack.updateSettings(
+                    { cutoffIso },
+                  );
+                  setSlackSettings(updated);
+                } catch (err) {
+                  console.error("Failed to update Slack cutoff:", err);
+                } finally {
+                  setSlackSaving(false);
+                }
+              }}
+              disabled={slackSaving}
+              className="p-2 rounded border border-border text-sm"
+            />
+            <p className="text-muted-foreground text-xs">
+              Excluded senders: {slackSettings.excludedSenders.join(", ")}
+            </p>
+          </div>
+        )}
       </section>
 
       <section className="mb-8">
