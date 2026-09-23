@@ -138,6 +138,15 @@ declare global {
     calculatedAt: string;
   }
 
+  interface DailyQuote {
+    date: string;
+    content: string;
+    author: string;
+    source: 'zenquotes' | 'quotable' | 'default' | 'cache';
+    tags: string[];
+    fetchedAt: string;
+  }
+
   interface ElectronAPI {
     window: {
       minimize: () => Promise<void>;
@@ -272,6 +281,10 @@ declare global {
     workload: {
       calculate: () => Promise<WorkloadSnapshot>;
       getLatest: () => Promise<WorkloadSnapshot | null>;
+    };
+    quote: {
+      getToday: () => Promise<DailyQuote>;
+      refresh: () => Promise<DailyQuote>;
     };
     calendar: {
       sync: (accountId: string) => Promise<{ accountId: string; status: string; lastSyncAt: string | null; error?: string; fetched: number }>;

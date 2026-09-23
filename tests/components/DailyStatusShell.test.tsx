@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { DailyStatusShell } from "../../src/components/daily-status";
 
 const mockGoogleTasks = {
@@ -24,6 +24,24 @@ beforeEach(() => {
   const currentWindow = globalThis.window;
   Object.assign(currentWindow, {
     electronAPI: {
+      quote: {
+        getToday: vi.fn().mockResolvedValue({
+          date: "2026-09-23",
+          content: "Stay focused.",
+          author: "Daily Author",
+          source: "cache",
+          tags: [],
+          fetchedAt: "2026-09-23T08:00:00.000Z",
+        }),
+        refresh: vi.fn().mockResolvedValue({
+          date: "2026-09-23",
+          content: "Stay focused.",
+          author: "Daily Author",
+          source: "cache",
+          tags: [],
+          fetchedAt: "2026-09-23T08:00:00.000Z",
+        }),
+      },
       calendar: {
         getTodayEvents: vi.fn().mockResolvedValue([]),
         getTodaySummary: vi.fn().mockResolvedValue({ totalToday: 0, byAccount: [] }),
@@ -42,13 +60,16 @@ afterEach(() => {
 });
 
 describe("DailyStatusShell", () => {
-  it("renders RTL Hebrew daily status layout regions", () => {
+  it("renders RTL Hebrew daily status layout regions", async () => {
     render(<DailyStatusShell />);
 
     const shell = screen.getByTestId("daily-status-shell");
     expect(shell).toHaveAttribute("dir", "rtl");
     expect(shell).toHaveAttribute("lang", "he");
     expect(screen.getByText(/FocusBoard · סטטוס יומי/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("daily-quote")).toBeInTheDocument();
+    });
     expect(screen.getByTestId("metrics-strip")).toBeInTheDocument();
     expect(screen.getByTestId("next-up-banner")).toBeInTheDocument();
     expect(screen.getByTestId("calendar-section")).toBeInTheDocument();
