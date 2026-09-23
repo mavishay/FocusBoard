@@ -112,4 +112,14 @@ describe('initializeDatabase', () => {
     expect(names).toContain('chat_messages');
     db.close();
   });
+
+  it('applies migration 030 and records schema version 30', async () => {
+    const { initializeDatabase } = await import('../../electron/main/db');
+    const db = initializeDatabase(TEST_DB_PATH);
+    const version = db
+      .prepare('SELECT MAX(version) as version FROM schema_migrations')
+      .get() as { version: number };
+    expect(version.version).toBe(30);
+    db.close();
+  });
 });
