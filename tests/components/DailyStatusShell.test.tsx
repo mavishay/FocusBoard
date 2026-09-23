@@ -21,6 +21,7 @@ const mockGmail = {
 };
 
 beforeEach(() => {
+  vi.useRealTimers();
   const currentWindow = globalThis.window;
   Object.assign(currentWindow, {
     electronAPI: {

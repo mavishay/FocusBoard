@@ -8,6 +8,7 @@ const mockGetToday = vi.fn();
 const mockRefresh = vi.fn();
 
 beforeEach(() => {
+  vi.useRealTimers();
   mockGetToday.mockResolvedValue({
     date: "2026-09-23",
     content: "Focus on what matters.",
