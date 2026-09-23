@@ -1,72 +1,15 @@
-import { useState, useEffect, useCallback, Component, type ReactNode } from 'react';
+import { Component, useState, type ReactNode } from 'react';
+import { useTasks } from '@/hooks/useTasks';
+import {
+  formatDueDate,
+  getPriorityFromDueDate,
+  type TaskItem,
+} from '@/lib/task-utils';
 
 const GOOGLE_BLUE = '#4285F4';
 const TICKTICK_BLUE = '#3C8DFF';
 
-type Priority = 'high' | 'medium' | 'low';
-
-export function getPriorityFromDueDate(dueAt: string | null): Priority | null {
-  if (!dueAt) return null;
-  const now = new Date();
-  const due = new Date(dueAt);
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-  const diffDays = Math.floor((startOfDue.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return 'high';
-  if (diffDays === 0) return 'medium';
-  return 'low';
-}
-
-export function formatDueDate(dueAt: string | null): string {
-  if (!dueAt) return '';
-  const now = new Date();
-  const due = new Date(dueAt);
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-  const diffDays = Math.floor((startOfDue.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return 'Today';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays === 1) return 'Tomorrow';
-  return due.toLocaleDateString();
-}
-
-interface TaskItem {
-  id: string;
-  title: string;
-  body: string | null;
-  status: 'needsAction' | 'completed' | '0' | '1';
-  dueAt: string | null;
-  source: string;
-  completedAt: string | null;
-  updatedAt: string;
-  listId: string;
-  listTitle: string;
-  accountId?: string;
-  // extra fields for TickTick
-  projectId?: string;
-  projectTitle?: string;
-}
-
-interface SyncStatus {
-  status: 'idle' | 'syncing' | 'error';
-  lastSyncAt: string | null;
-  error: string | null;
-  accountCount: number;
-}
-
-interface Account {
-  id: string;
-  email: string;
-  displayName: string;
-  color: string | null;
-}
-
-interface ListItem {
-  id: string;
-  title: string;
-  source: 'google-tasks' | 'ticktick';
-  accountId: string;
-}
+export { formatDueDate, getPriorityFromDueDate } from '@/lib/task-utils';
 
 class ErrorBoundary extends Component<
   { children: ReactNode; fallback: ReactNode },
@@ -90,358 +33,36 @@ class ErrorBoundary extends Component<
 }
 
 function TaskListInner() {
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [accountsColorMap, setAccountsColorMap] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDueDate, setNewTaskDueDate] = useState('');
-  const [newTaskListId, setNewTaskListId] = useState('');
-  const [availableLists, setAvailableLists] = useState<ListItem[]>([]);
-  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [gtTasks, gtStatus, gtAccounts, ttTasks, ttStatus, ttAccounts, gmailAccounts] = await Promise.all([
-        window.electronAPI.googleTasks.listTasks(),
-        window.electronAPI.googleTasks.status(),
-        window.electronAPI.googleTasks.listAccounts(),
-        window.electronAPI.ticktick.listTasks(),
-        window.electronAPI.ticktick.status(),
-        window.electronAPI.ticktick.listAccounts(),
-        window.electronAPI.gmail.listAccounts(),
-      ]);
-      // Normalize statuses to a common shape
-      const normalizedGtTasks: TaskItem[] = gtTasks.map((t) => ({
-        id: t.id,
-        title: t.title,
-        body: t.notes,
-        status: t.status,
-        dueAt: t.due,
-        source: 'Google Tasks',
-        completedAt: t.completedAt,
-        updatedAt: t.updatedAt,
-        listId: t.listId,
-        listTitle: t.listTitle ?? '',
-        accountId: t.accountId,
-      }));
-      const normalizedTtTasks: TaskItem[] = ttTasks.map((t) => ({
-        id: t.id,
-        title: t.title,
-        body: t.content,
-        status: t.status,
-        dueAt: t.dueDate,
-        source: 'TickTick',
-        completedAt: t.completedAt,
-        updatedAt: t.updatedAt,
-        listId: t.projectId,
-        listTitle: t.projectTitle ?? '',
-        projectId: t.projectId,
-        projectTitle: t.projectTitle,
-      }));
-      const merged = [...normalizedGtTasks, ...normalizedTtTasks].sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
-      setTasks(merged);
-      // Use first account for sync status (simplified)
-      setSyncStatus({
-        status: gtStatus.status === 'syncing' || ttStatus.status === 'syncing' ? 'syncing' : 'idle',
-        lastSyncAt: gtStatus.lastSyncAt ?? ttStatus.lastSyncAt,
-        error: gtStatus.error ?? ttStatus.error,
-        accountCount: gtAccounts.length + ttAccounts.length,
-      });
-      setAccounts([...gtAccounts.map(a => ({ ...a, source: 'google-tasks' })), ...ttAccounts.map(a => ({ ...a, source: 'ticktick' }))]);
-      const colorMap: Record<string, string> = {};
-      for (const a of gmailAccounts) {
-        if (a.color) colorMap[a.email] = a.color;
-      }
-      setAccountsColorMap(colorMap);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load tasks');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const loadAvailableLists = useCallback(async () => {
-    try {
-      const [gtAccounts, ttAccounts] = await Promise.all([
-        window.electronAPI.googleTasks.listAccounts(),
-        window.electronAPI.ticktick.listAccounts(),
-      ]);
-      const lists: ListItem[] = [];
-      for (const acc of gtAccounts) {
-        const gtLists = await window.electronAPI.googleTasks.listLists(acc.id);
-        for (const l of gtLists) {
-          lists.push({ id: l.id, title: l.title, source: 'google-tasks', accountId: acc.id });
-        }
-      }
-      for (const acc of ttAccounts) {
-        const ttProjects = await window.electronAPI.ticktick.listProjects(acc.id);
-        for (const p of ttProjects) {
-          lists.push({ id: p.id, title: p.name, source: 'ticktick', accountId: acc.id });
-        }
-      }
-      setAvailableLists(lists);
-      if (lists.length > 0 && !newTaskListId) {
-        setNewTaskListId(lists[0].id);
-      }
-    } catch (err) {
-      console.error('Failed to load lists:', err);
-    }
-  }, [newTaskListId]);
-
-  useEffect(() => {
-    if (showAddForm) {
-      loadAvailableLists();
-    }
-  }, [showAddForm, loadAvailableLists]);
-
-  const handleSync = async () => {
-    // Sync both providers (simplified: sync first account of each)
-    try {
-      const [gtAccounts, ttAccounts] = await Promise.all([
-        window.electronAPI.googleTasks.listAccounts(),
-        window.electronAPI.ticktick.listAccounts(),
-      ]);
-      if (gtAccounts.length > 0) {
-        await window.electronAPI.googleTasks.sync(gtAccounts[0].id);
-      }
-      if (ttAccounts.length > 0) {
-        await window.electronAPI.ticktick.sync(ttAccounts[0].id);
-      }
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sync failed');
-    }
-  };
-
-  const handleConnect = async () => {
-    // Placeholder: should open connection flow
-    try {
-      // For now, just reload
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connection failed');
-    }
-  };
-
-  const handleToggleComplete = async (task: TaskItem) => {
-    // Optimistic update
-    const newStatus = task.source === 'Google Tasks'
-      ? (task.status === 'completed' ? 'needsAction' : 'completed')
-      : (task.status === '1' ? '0' : '1');
-    setTasks((prev) =>
-      prev.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t))
-    );
-    try {
-      if (task.source === 'Google Tasks') {
-        const accountId = task.accountId || accounts.find(a => a.source === 'google-tasks')?.id;
-        if (!accountId) throw new Error('No Google Tasks account');
-        await window.electronAPI.googleTasks.updateTask({
-          accountId,
-          taskListId: task.listId,
-          taskId: task.id,
-          status: newStatus as 'needsAction' | 'completed',
-        });
-      } else {
-        const accountId = accounts.find(a => a.source === 'ticktick')?.id;
-        if (!accountId) throw new Error('No TickTick account');
-        await window.electronAPI.ticktick.updateTask({
-          accountId,
-          projectId: task.listId,
-          taskId: task.id,
-          status: newStatus as '0' | '1',
-        });
-      }
-    } catch (err) {
-      // Revert
-      setTasks((prev) =>
-        prev.map((t) => (t.id === task.id ? { ...t, status: task.status } : t))
-      );
-      setError(err instanceof Error ? err.message : 'Update failed');
-    }
-  };
-
-  const handleDelete = async (task: TaskItem) => {
-    if (!window.confirm(`Delete "${task.title}"?`)) return;
-    // Optimistic removal
-    setTasks((prev) => prev.filter((t) => t.id !== task.id));
-    try {
-      if (task.source === 'Google Tasks') {
-        const accountId = task.accountId || accounts.find(a => a.source === 'google-tasks')?.id;
-        if (!accountId) throw new Error('No Google Tasks account');
-        await window.electronAPI.googleTasks.deleteTask({
-          accountId,
-          taskListId: task.listId,
-          taskId: task.id,
-        });
-      } else {
-        const accountId = accounts.find(a => a.source === 'ticktick')?.id;
-        if (!accountId) throw new Error('No TickTick account');
-        await window.electronAPI.ticktick.deleteTask({
-          accountId,
-          projectId: task.listId,
-          taskId: task.id,
-        });
-      }
-    } catch (err) {
-      // Re-add task (we lost original position, but that's okay)
-      setTasks((prev) => [...prev, task].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
-      setError(err instanceof Error ? err.message : 'Delete failed');
-    }
-  };
-
-  const handleAddTask = async () => {
-    if (!newTaskTitle.trim()) {
-      setError('Title is required');
-      return;
-    }
-    const listItem = availableLists.find((l) => l.id === newTaskListId);
-    if (!listItem) {
-      setError('Please select a list');
-      return;
-    }
-    // Optimistic add
-    const optimisticTask: TaskItem = {
-      id: `temp-${Date.now()}`,
-      title: newTaskTitle.trim(),
-      body: null,
-      status: listItem.source === 'google-tasks' ? 'needsAction' : '0',
-      dueAt: newTaskDueDate || null,
-      source: listItem.source === 'google-tasks' ? 'Google Tasks' : 'TickTick',
-      completedAt: null,
-      updatedAt: new Date().toISOString(),
-      listId: listItem.id,
-      listTitle: listItem.title,
-    };
-    setTasks((prev) => [optimisticTask, ...prev]);
-    setShowAddForm(false);
-    setNewTaskTitle('');
-    setNewTaskDueDate('');
-    try {
-      if (listItem.source === 'google-tasks') {
-        const result = await window.electronAPI.googleTasks.createTask({
-          accountId: listItem.accountId,
-          taskListId: listItem.id,
-          title: newTaskTitle.trim(),
-          notes: newTaskDueDate || undefined,
-        });
-        // Replace optimistic task with real task
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === optimisticTask.id
-              ? {
-                  id: result.id,
-                  title: result.title,
-                  body: result.notes,
-                  status: result.status,
-                  dueAt: result.due ?? null,
-                  source: 'Google Tasks',
-                  completedAt: result.completedAt,
-                  updatedAt: result.updatedAt,
-                  listId: result.listId,
-                  listTitle: result.listTitle ?? '',
-                }
-              : t
-          )
-        );
-      } else {
-        const result = await window.electronAPI.ticktick.createTask({
-          accountId: listItem.accountId,
-          projectId: listItem.id,
-          title: newTaskTitle.trim(),
-          dueDate: newTaskDueDate || undefined,
-        });
-        // Replace optimistic task with real task
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === optimisticTask.id
-              ? {
-                  id: result.id,
-                  title: result.title,
-                  body: result.content,
-                  status: result.status,
-                  dueAt: result.dueDate ?? null,
-                  source: 'TickTick',
-                  completedAt: result.completedAt,
-                  updatedAt: result.updatedAt,
-                  listId: result.projectId,
-                  listTitle: result.projectTitle ?? '',
-                  projectId: result.projectId,
-                  projectTitle: result.projectTitle,
-                }
-              : t
-          )
-        );
-      }
-    } catch (err) {
-      // Remove optimistic task
-      setTasks((prev) => prev.filter((t) => t.id !== optimisticTask.id));
-      setError(err instanceof Error ? err.message : 'Failed to create task');
-    }
-  };
-
-  const handleEditStart = (task: TaskItem) => {
-    setEditingTaskId(task.id);
-    setEditTitle(task.title);
-  };
-
-  const handleEditSave = async (task: TaskItem) => {
-    if (!editTitle.trim()) {
-      setEditingTaskId(null);
-      return;
-    }
-    const newTitle = editTitle.trim();
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) => (t.id === task.id ? { ...t, title: newTitle } : t))
-    );
-    setEditingTaskId(null);
-    try {
-      if (task.source === 'Google Tasks') {
-        const accountId = task.accountId || accounts.find(a => a.source === 'google-tasks')?.id;
-        if (!accountId) throw new Error('No Google Tasks account');
-        await window.electronAPI.googleTasks.updateTask({
-          accountId,
-          taskListId: task.listId,
-          taskId: task.id,
-          title: newTitle,
-        });
-      } else {
-        const accountId = accounts.find(a => a.source === 'ticktick')?.id;
-        if (!accountId) throw new Error('No TickTick account');
-        await window.electronAPI.ticktick.updateTask({
-          accountId,
-          projectId: task.listId,
-          taskId: task.id,
-          title: newTitle,
-        });
-      }
-    } catch (err) {
-      // Revert
-      setTasks((prev) =>
-        prev.map((t) => (t.id === task.id ? { ...t, title: task.title } : t))
-      );
-      setError(err instanceof Error ? err.message : 'Failed to save changes');
-    }
-  };
-
-  const handleEditCancel = () => {
-    setEditingTaskId(null);
-    setEditTitle('');
-  };
+  const {
+    tasks,
+    syncStatus,
+    accounts,
+    accountsColorMap,
+    loading,
+    error,
+    showAddForm,
+    setShowAddForm,
+    newTaskTitle,
+    setNewTaskTitle,
+    newTaskDueDate,
+    setNewTaskDueDate,
+    newTaskListId,
+    setNewTaskListId,
+    availableLists,
+    editingTaskId,
+    editTitle,
+    setEditTitle,
+    loadData,
+    handleSync,
+    handleConnect,
+    handleToggleComplete,
+    handleDelete,
+    handleAddTask,
+    handleEditStart,
+    handleEditSave,
+    handleEditCancel,
+  } = useTasks();
 
   if (loading) {
     return (
@@ -563,100 +184,139 @@ function TaskListInner() {
         </div>
       ) : (
         <ul className="list-none p-0 m-0 overflow-auto flex-1 flex flex-col gap-1.5">
-          {visibleTasks.map((task) => {
-            const taskAccount = accounts.find((a) => a.id === task.source || a.email === task.source);
-            const taskColor = (taskAccount && accountsColorMap[taskAccount.email]) || GOOGLE_BLUE;
-            const isOverdue = task.dueAt && new Date(task.dueAt) < new Date() && !(task.status === 'completed' || task.status === '1');
-            const isCompleted = task.status === 'completed' || task.status === '1';
-            const priority = getPriorityFromDueDate(task.dueAt);
-            const priorityColors = { high: '#ef4444', medium: '#eab308', low: '#22c55e' };
-            const priorityLabels = { high: 'High', medium: 'Medium', low: 'Low' };
-            return (
-            <li
-              key={task.id}
-              className={`group flex items-center gap-2 p-2.5 border rounded-lg transition-all duration-200 hover:shadow-sm ${
-                isOverdue ? 'border-destructive/30 bg-destructive/5' : 'border-border bg-card hover:border-primary/30'
-              }`}
-              style={{ borderLeftWidth: '4px', borderLeftColor: taskColor }}
-            >
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap text-white shrink-0"
-                style={{ background: task.source === 'Google Tasks' ? GOOGLE_BLUE : TICKTICK_BLUE }}
-                title={task.source}
-                aria-label={task.source}
-              >
-                <span aria-hidden="true">{task.source}</span>
-              </span>
-              <label className="relative flex items-center justify-center shrink-0">
-                <input
-                  type="checkbox"
-                  checked={isCompleted}
-                  onChange={() => handleToggleComplete(task)}
-                  aria-label={`Mark "${task.title}" as ${isCompleted ? 'incomplete' : 'complete'}`}
-                  className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-border checked:bg-primary checked:border-primary transition-colors"
-                />
-                <svg className="absolute w-3 h-3 text-primary-foreground pointer-events-none opacity-0 peer-checked:opacity-100" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 8L6 11L11 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </label>
-              {editingTaskId === task.id ? (
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  onBlur={() => handleEditSave(task)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleEditSave(task);
-                    if (e.key === 'Escape') handleEditCancel();
-                  }}
-                  autoFocus
-                  className="flex-1 p-1 text-sm border border-border rounded"
-                />
-              ) : (
-                <span
-                  className={`flex-1 text-sm cursor-pointer ${
-                    isCompleted
-                      ? 'line-through text-muted-foreground'
-                      : isOverdue
-                        ? 'text-destructive font-medium'
-                        : 'text-foreground'
-                  }`}
-                  onClick={() => handleEditStart(task)}
-                  title="Click to edit"
-                >
-                  {task.title}
-                </span>
-              )}
-              {task.dueAt && (
-                <span className="flex items-center gap-1">
-                  {priority && (
-                    <span
-                      className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white shrink-0"
-                      style={{ background: priorityColors[priority] }}
-                      title={`Priority: ${priorityLabels[priority]}`}
-                      aria-label={`Priority: ${priorityLabels[priority]}`}
-                    >
-                      {priorityLabels[priority]}
-                    </span>
-                  )}
-                  <span className={`text-xs whitespace-nowrap ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                    {formatDueDate(task.dueAt)}
-                  </span>
-                </span>
-              )}
-              <button
-                onClick={() => handleDelete(task)}
-                className="opacity-0 group-hover:opacity-100 text-destructive/70 hover:text-destructive border-none p-1 cursor-pointer text-xs bg-transparent transition-opacity"
-                aria-label={`Delete "${task.title}"`}
-              >
-                ×
-              </button>
-            </li>
-            );
-          })}
+          {visibleTasks.map((task) => renderTaskRow({
+            task,
+            accounts,
+            accountsColorMap,
+            editingTaskId,
+            editTitle,
+            setEditTitle,
+            handleToggleComplete,
+            handleDelete,
+            handleEditStart,
+            handleEditSave,
+            handleEditCancel,
+          }))}
         </ul>
       )}
     </div>
+  );
+}
+
+function renderTaskRow({
+  task,
+  accounts,
+  accountsColorMap,
+  editingTaskId,
+  editTitle,
+  setEditTitle,
+  handleToggleComplete,
+  handleDelete,
+  handleEditStart,
+  handleEditSave,
+  handleEditCancel,
+}: {
+  task: TaskItem;
+  accounts: Array<{ id: string; email: string; displayName: string; source?: string }>;
+  accountsColorMap: Record<string, string>;
+  editingTaskId: string | null;
+  editTitle: string;
+  setEditTitle: (value: string) => void;
+  handleToggleComplete: (task: TaskItem) => void;
+  handleDelete: (task: TaskItem) => void;
+  handleEditStart: (task: TaskItem) => void;
+  handleEditSave: (task: TaskItem) => void;
+  handleEditCancel: () => void;
+}) {
+  const taskAccount = accounts.find((a) => a.id === task.source || a.email === task.source);
+  const taskColor = (taskAccount && accountsColorMap[taskAccount.email]) || GOOGLE_BLUE;
+  const isOverdue = task.dueAt && new Date(task.dueAt) < new Date() && !(task.status === 'completed' || task.status === '1');
+  const isCompleted = task.status === 'completed' || task.status === '1';
+  const priority = getPriorityFromDueDate(task.dueAt);
+  const priorityColors = { high: '#ef4444', medium: '#eab308', low: '#22c55e' };
+  const priorityLabels = { high: 'High', medium: 'Medium', low: 'Low' };
+
+  return (
+    <li
+      key={task.id}
+      className={`group flex items-center gap-2 p-2.5 border rounded-lg transition-all duration-200 hover:shadow-sm ${
+        isOverdue ? 'border-destructive/30 bg-destructive/5' : 'border-border bg-card hover:border-primary/30'
+      }`}
+      style={{ borderLeftWidth: '4px', borderLeftColor: taskColor }}
+    >
+      <span
+        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap text-white shrink-0"
+        style={{ background: task.source === 'Google Tasks' ? GOOGLE_BLUE : TICKTICK_BLUE }}
+        title={task.source}
+        aria-label={task.source}
+      >
+        <span aria-hidden="true">{task.source}</span>
+      </span>
+      <label className="relative flex items-center justify-center shrink-0">
+        <input
+          type="checkbox"
+          checked={isCompleted}
+          onChange={() => handleToggleComplete(task)}
+          aria-label={`Mark "${task.title}" as ${isCompleted ? 'incomplete' : 'complete'}`}
+          className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-border checked:bg-primary checked:border-primary transition-colors"
+        />
+        <svg className="absolute w-3 h-3 text-primary-foreground pointer-events-none opacity-0 peer-checked:opacity-100" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 8L6 11L11 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </label>
+      {editingTaskId === task.id ? (
+        <input
+          type="text"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          onBlur={() => handleEditSave(task)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleEditSave(task);
+            if (e.key === 'Escape') handleEditCancel();
+          }}
+          autoFocus
+          className="flex-1 p-1 text-sm border border-border rounded"
+        />
+      ) : (
+        <span
+          className={`flex-1 text-sm cursor-pointer ${
+            isCompleted
+              ? 'line-through text-muted-foreground'
+              : isOverdue
+                ? 'text-destructive font-medium'
+                : 'text-foreground'
+          }`}
+          onClick={() => handleEditStart(task)}
+          title="Click to edit"
+        >
+          {task.title}
+        </span>
+      )}
+      {task.dueAt && (
+        <span className="flex items-center gap-1">
+          {priority && (
+            <span
+              className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white shrink-0"
+              style={{ background: priorityColors[priority] }}
+              title={`Priority: ${priorityLabels[priority]}`}
+              aria-label={`Priority: ${priorityLabels[priority]}`}
+            >
+              {priorityLabels[priority]}
+            </span>
+          )}
+          <span className={`text-xs whitespace-nowrap ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+            {formatDueDate(task.dueAt)}
+          </span>
+        </span>
+      )}
+      <button
+        onClick={() => handleDelete(task)}
+        className="opacity-0 group-hover:opacity-100 text-destructive/70 hover:text-destructive border-none p-1 cursor-pointer text-xs bg-transparent transition-opacity"
+        aria-label={`Delete "${task.title}"`}
+      >
+        ×
+      </button>
+    </li>
   );
 }
 

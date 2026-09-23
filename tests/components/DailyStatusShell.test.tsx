@@ -1,8 +1,24 @@
 // @vitest-environment jsdom
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
 import { DailyStatusShell } from "../../src/components/daily-status";
+
+const mockGoogleTasks = {
+  listTasks: vi.fn().mockResolvedValue([]),
+  status: vi.fn().mockResolvedValue({ status: "idle", lastSyncAt: null, error: null }),
+  listAccounts: vi.fn().mockResolvedValue([]),
+};
+
+const mockTickTick = {
+  listTasks: vi.fn().mockResolvedValue([]),
+  status: vi.fn().mockResolvedValue({ status: "idle", lastSyncAt: null, error: null }),
+  listAccounts: vi.fn().mockResolvedValue([]),
+};
+
+const mockGmail = {
+  listAccounts: vi.fn().mockResolvedValue([]),
+};
 
 beforeEach(() => {
   const currentWindow = globalThis.window;
@@ -12,13 +28,17 @@ beforeEach(() => {
         getTodayEvents: vi.fn().mockResolvedValue([]),
         getTodaySummary: vi.fn().mockResolvedValue({ totalToday: 0, byAccount: [] }),
       },
-      googleTasks: { listTasks: vi.fn().mockResolvedValue([]) },
-      ticktick: { listTasks: vi.fn().mockResolvedValue([]) },
+      googleTasks: mockGoogleTasks,
+      ticktick: mockTickTick,
       classification: { getEmails: vi.fn().mockResolvedValue([]) },
-      gmail: { listAccounts: vi.fn().mockResolvedValue([]) },
+      gmail: mockGmail,
       cron: { onStatusUpdate: vi.fn(() => vi.fn()) },
     },
   });
+});
+
+afterEach(() => {
+  cleanup();
 });
 
 describe("DailyStatusShell", () => {

@@ -68,8 +68,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-09-23T12:00:00Z"));
   cronStatusCallback = null;
   setupDefaults();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (globalThis as any).window = {
+  Object.assign(window, {
     electronAPI: {
       calendar: mockCalendar,
       googleTasks: mockGoogleTasks,
@@ -78,7 +77,7 @@ beforeEach(() => {
       gmail: mockGmail,
       cron: mockCron,
     },
-  };
+  });
 });
 
 afterEach(() => {

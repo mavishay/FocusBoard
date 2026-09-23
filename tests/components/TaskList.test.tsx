@@ -35,6 +35,7 @@ function setupDefaults() {
   mockGoogleTasks.listTasks.mockResolvedValue([]);
   mockGoogleTasks.status.mockResolvedValue({ status: 'idle', lastSyncAt: null, error: null });
   mockGoogleTasks.listAccounts.mockResolvedValue([]);
+  mockGoogleTasks.listLists.mockResolvedValue([]);
   mockTickTick.listTasks.mockResolvedValue([]);
   mockTickTick.status.mockResolvedValue({ status: 'idle', lastSyncAt: null, error: null });
   mockTickTick.listAccounts.mockResolvedValue([]);
@@ -44,8 +45,7 @@ function setupDefaults() {
 beforeEach(() => {
   vi.clearAllMocks();
   setupDefaults();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).window = {
+  Object.assign(window, {
     electronAPI: {
       googleTasks: mockGoogleTasks,
       ticktick: mockTickTick,
@@ -58,7 +58,7 @@ beforeEach(() => {
         readText: vi.fn().mockResolvedValue(''),
       },
     },
-  };
+  });
 });
 
 afterEach(() => {
