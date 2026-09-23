@@ -9,6 +9,8 @@ export interface SlackMessageCandidate {
   botId?: string | null;
   subtype?: string | null;
   channelName?: string | null;
+  channelId?: string | null;
+  isDirectMessage?: boolean;
 }
 
 const DEFAULT_EXCLUDED_SENDERS = [
@@ -39,6 +41,8 @@ export function isExcludedSender(
     botId: candidate.botId,
     subtype: candidate.subtype,
     channelName: candidate.channelName,
+    channelId: candidate.channelId,
+    isDirectMessage: candidate.isDirectMessage,
   };
 
   return isSharedSlackNoise(sharedCandidate, { excludedSenders });

@@ -36,6 +36,29 @@ describe("slack filters", () => {
     ).toBe(true);
   });
 
+  it("keeps PR review asks in project-vgm-engineering channel", () => {
+    expect(
+      isExcludedSender(
+        {
+          text: "Please review my PR",
+          username: "bob",
+          channelId: "C0BASNN6YU9",
+        },
+        [],
+      ),
+    ).toBe(false);
+    expect(
+      isExcludedSender(
+        {
+          text: "Please review my PR",
+          username: "bob",
+          channelName: "random",
+        },
+        [],
+      ),
+    ).toBe(true);
+  });
+
   it("filters by cutoff timestamp", () => {
     const cutoff = "2026-09-16T10:04:00.000Z";
     const afterCutoffTs = String(

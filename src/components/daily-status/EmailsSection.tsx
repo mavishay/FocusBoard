@@ -46,7 +46,11 @@ function buildEmailFootnote(rows: EmailRow[]): string {
     .map(([label, count]) => `${label}: ${count}`)
     .join(" · ");
 
-  return `${breakdown || "אין מיילים unread"}. GitHub/Gemini/Flagsmith/Neon/Jetserver/cursor[bot]/vercel[bot]/RSVP acceptances סוננו.`;
+  return (
+    `${breakdown || "אין מיילים unread"}. ` +
+    "סוננו: promotions/ads/blasts, GitHub, Gemini notes, Flagsmith, Jetserver/jetclients, " +
+    "Neon alerts, cursor[bot]/vercel[bot], Linear digest, RSVP acceptances, Zoom confirmations."
+  );
 }
 
 export function EmailsSection() {

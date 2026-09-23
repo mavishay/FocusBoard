@@ -33,7 +33,9 @@ describe("DailyStatusRefreshContext", () => {
       "Asia/Bangkok",
     );
     expect(footer).toContain("Asia/Bangkok");
-    expect(footer).toContain("נתונים עודכנו");
+    expect(footer).toContain("נתונים נכתבו מחדש");
+    expect(footer).toContain("בנגקוק");
+    expect(footer).toContain("מתעדכנים כל 5 דק׳");
   });
 
   it("renders footer with last refresh after provider sync", async () => {
@@ -45,7 +47,7 @@ describe("DailyStatusRefreshContext", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("daily-status-footer")).toHaveTextContent(
-        "נתונים עודכנו",
+        "נתונים נכתבו מחדש",
       );
     });
   });

@@ -255,6 +255,8 @@ async function fetchWorkspaceActions(
           username: latest.username,
           botId: latest.bot_id,
           subtype: latest.subtype,
+          channelId: conversation.id,
+          isDirectMessage: Boolean(conversation.is_im || conversation.is_mpim),
         },
         settings.excludedSenders,
       )
@@ -278,6 +280,7 @@ async function fetchWorkspaceActions(
   const mentions = await searchMentions(token, userId, settings.cutoffIso);
   for (const match of mentions) {
     if (!isAfterCutoff(match.ts, settings.cutoffIso)) continue;
+    const channelId = match.channel?.id;
     if (
       isExcludedSender(
         {
@@ -285,6 +288,8 @@ async function fetchWorkspaceActions(
           username: match.username,
           botId: match.bot_id,
           subtype: match.subtype,
+          channelName: match.channel?.name,
+          channelId,
         },
         settings.excludedSenders,
       )
@@ -292,7 +297,6 @@ async function fetchWorkspaceActions(
       continue;
     }
 
-    const channelId = match.channel?.id;
     const key = channelId ? `${channelId}:${match.ts}` : match.ts;
     if (seen.has(key)) continue;
     seen.add(key);

@@ -19,7 +19,7 @@ function formatMetaLine(now: Date): string {
     .split(" ")
     .pop();
 
-  return `${weekday} · ${date} · ${time} ${timezone} · ריפרש כל 60 ש׳`;
+  return `${weekday} · ${date} · ${time} ${timezone} · ריענון נתונים כל 5 דק׳`;
 }
 
 export function DailyStatusHeader() {

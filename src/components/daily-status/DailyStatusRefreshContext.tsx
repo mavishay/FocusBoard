@@ -135,15 +135,10 @@ export function useDailyStatusRefresh(): DailyStatusRefreshState {
   return useContext(DailyStatusRefreshContext);
 }
 
-export function formatDailyStatusFooter(
-  lastRefreshedAt: Date | null,
-  timeZone: string = getDailyStatusTimezone(),
+function formatFooterTimeLabel(
+  lastRefreshedAt: Date,
+  timeZone: string,
 ): string {
-  const tzLabel = timeZone.replace(/_/g, " ");
-  if (!lastRefreshedAt) {
-    return `FocusBoard · ממתין לריענון ראשון · ${tzLabel}`;
-  }
-
   const time = lastRefreshedAt.toLocaleTimeString("he-IL", {
     timeZone,
     hour: "2-digit",
@@ -151,5 +146,30 @@ export function formatDailyStatusFooter(
     hour12: false,
   });
 
-  return `FocusBoard · נתונים עודכנו ${time} ${tzLabel} · ריענון אוטומטי כל 5 דק׳ · א׳–ה׳ 09:00–17:30`;
+  if (timeZone === "Asia/Bangkok") {
+    return `${time} בנגקוק`;
+  }
+
+  const tzLabel = timeZone.replace(/_/g, " ");
+  return `${time} ${tzLabel}`;
+}
+
+/**
+ * Matches legacy HTML footer intent; Electron polls data every 5 min (no 60s window reload).
+ */
+export function formatDailyStatusFooter(
+  lastRefreshedAt: Date | null,
+  timeZone: string = getDailyStatusTimezone(),
+): string {
+  const tzLabel = timeZone.replace(/_/g, " ");
+  if (!lastRefreshedAt) {
+    return `FocusBoard · ממתין לריענון ראשון · ${tzLabel} · Sun–Thu 09:00–17:30`;
+  }
+
+  const timeLabel = formatFooterTimeLabel(lastRefreshedAt, timeZone);
+
+  return (
+    `FocusBoard · נתונים נכתבו מחדש ${timeLabel} · מתעדכנים כל 5 דק׳ · ` +
+    `${tzLabel} · Sun–Thu 09:00–17:30`
+  );
 }
