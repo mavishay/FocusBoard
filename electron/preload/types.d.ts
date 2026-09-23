@@ -277,6 +277,11 @@ declare global {
       sync: (accountId: string) => Promise<{ accountId: string; status: string; lastSyncAt: string | null; error?: string; fetched: number }>;
       syncAll: () => Promise<Array<{ accountId: string; status: string; lastSyncAt: string | null; error?: string; fetched: number }>>;
       getTodayEvents: () => Promise<CalendarEventResponse[]>;
+      getTodaySummary: () => Promise<{
+        totalToday: number;
+        byAccount: Array<{ label: string; count: number }>;
+      }>;
+      getFilteredEvents: (startDate: string, endDate: string) => Promise<CalendarEventResponse[]>;
       status: () => Promise<Array<{ accountId: string; status: string; lastSyncAt: string | null; error: string | null; fetched: number }>>;
     };
   }

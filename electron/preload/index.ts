@@ -89,6 +89,7 @@ const ALLOWED_INVOKE = new Set([
   'calendar:sync',
   'calendar:syncAll',
   'calendar:getTodayEvents',
+  'calendar:getTodaySummary',
   'calendar:getFilteredEvents',
   'calendar:status',
   'services:status',
@@ -362,6 +363,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       gatedInvoke('calendar:syncAll') as Promise<Array<{ accountId: string; status: string; lastSyncAt: string | null; error?: string; fetched: number }>>,
     getTodayEvents: () =>
       gatedInvoke('calendar:getTodayEvents') as Promise<CalendarEventResponse[]>,
+    getTodaySummary: () =>
+      gatedInvoke('calendar:getTodaySummary') as Promise<{
+        totalToday: number;
+        byAccount: Array<{ label: string; count: number }>;
+      }>,
     getFilteredEvents: (startDate: string, endDate: string) =>
       gatedInvoke('calendar:getFilteredEvents', { startDate, endDate }) as Promise<CalendarEventResponse[]>,
     status: () =>
