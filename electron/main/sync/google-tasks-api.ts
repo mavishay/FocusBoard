@@ -86,7 +86,7 @@ export async function updateTask(
   accessToken: string,
   taskListId: string,
   taskId: string,
-  updates: { title?: string; notes?: string; status?: string }
+  updates: { title?: string; notes?: string; status?: string; due?: string }
 ): Promise<TaskEntry> {
   const tasks = createClient(accessToken);
   const response = await tasks.tasks.patch({

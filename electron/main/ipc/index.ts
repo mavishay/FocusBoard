@@ -23,6 +23,7 @@ import { registerCalendarHandlers } from './calendar-handlers';
 import { registerWorkloadHandlers } from './workload-handlers';
 import { registerQuoteHandlers } from './quote-handlers';
 import { registerNotesHandlers } from './notes-handlers';
+import { registerTaskPlannerHandlers } from './task-planner-handlers';
 
 export function registerIpcHandlers(
   db: Database.Database,
@@ -51,6 +52,7 @@ export function registerIpcHandlers(
   registerWorkloadHandlers(ipcMain, db);
   registerQuoteHandlers(ipcMain, db);
   registerNotesHandlers(ipcMain, db);
+  registerTaskPlannerHandlers(ipcMain, db);
 
   ipcMain.handle('shell:openExternal', async (_event, payload: { url: string }) => {
     const url = new URL(payload.url);

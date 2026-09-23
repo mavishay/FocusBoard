@@ -53,6 +53,33 @@ declare global {
     updatedAt: string;
     projectId: string;
     projectTitle: string | null;
+    accountId: string;
+  }
+
+  type TaskPlannerAction = 'reschedule' | 'complete' | 'dismiss' | 'keep';
+
+  interface TaskPlannerSuggestion {
+    id: string;
+    sessionId: string;
+    taskId: string;
+    taskTitle: string;
+    source: 'Google Tasks' | 'TickTick';
+    accountId: string;
+    listId: string;
+    currentDueDate: string | null;
+    action: TaskPlannerAction;
+    suggestedDueDate: string | null;
+    reasoning: string;
+    accepted: boolean | null;
+    appliedAt: string | null;
+  }
+
+  interface TaskPlannerSession {
+    id: string;
+    status: 'draft' | 'ready' | 'applied' | 'cancelled';
+    createdAt: string;
+    updatedAt: string;
+    suggestions: TaskPlannerSuggestion[];
   }
 
   interface TickTickAccount {
@@ -229,6 +256,7 @@ declare global {
         title?: string;
         notes?: string;
         status?: 'needsAction' | 'completed';
+        due?: string | null;
       }) => Promise<{ success: boolean }>;
       deleteTask: (data: {
         accountId: string;
@@ -315,6 +343,23 @@ declare global {
       }) => Promise<Note>;
       delete: (data: { id: string }) => Promise<{ success: boolean }>;
       getAllTags: () => Promise<string[]>;
+    };
+    taskPlanner: {
+      listOpenTasks: () => Promise<Array<{
+        id: string;
+        title: string;
+        source: 'Google Tasks' | 'TickTick';
+        accountId: string;
+        listId: string;
+        listTitle: string;
+        dueDate: string | null;
+      }>>;
+      createSession: () => Promise<TaskPlannerSession>;
+      getSession: (sessionId: string) => Promise<TaskPlannerSession | null>;
+      generateSuggestions: (sessionId: string) => Promise<TaskPlannerSession>;
+      updateSuggestion: (data: { sessionId: string; suggestionId: string; accepted: boolean }) => Promise<TaskPlannerSuggestion>;
+      acceptAll: (sessionId: string) => Promise<TaskPlannerSession>;
+      applySuggestions: (sessionId: string) => Promise<{ applied: number; failed: string[] }>;
     };
     calendar: {
       sync: (accountId: string) => Promise<{ accountId: string; status: string; lastSyncAt: string | null; error?: string; fetched: number }>;

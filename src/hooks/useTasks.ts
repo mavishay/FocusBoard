@@ -78,6 +78,7 @@ export function useTasks() {
         listTitle: t.projectTitle ?? '',
         projectId: t.projectId,
         projectTitle: t.projectTitle,
+        accountId: t.accountId,
       }));
 
       const merged = [...normalizedGtTasks, ...normalizedTtTasks].sort(
