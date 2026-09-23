@@ -7,6 +7,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { Onboarding } from '@/components/Onboarding';
 import { Dashboard } from '@/components/Dashboard';
 import { Settings } from '@/components/Settings';
+import { Notes } from '@/components/Notes';
 
 function LoadingScreen() {
   return (
@@ -54,6 +55,7 @@ export function App() {
                 }
               >
                 <Route index element={<Dashboard />} />
+                <Route path="notes" element={<Notes />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

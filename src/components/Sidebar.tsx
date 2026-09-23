@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   Home,
   Settings,
+  StickyNote,
   Sun,
   Moon,
   PanelLeftClose,
@@ -16,7 +17,10 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 
-const NAV_ITEMS = [{ icon: Home, label: "Dashboard", to: "/" }] as const;
+const NAV_ITEMS = [
+  { icon: Home, label: "Dashboard", to: "/" },
+  { icon: StickyNote, label: "Notes", to: "/notes" },
+] as const;
 
 export function Sidebar() {
   const { theme, setTheme } = useTheme();
